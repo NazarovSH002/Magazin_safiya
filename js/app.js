@@ -4,6 +4,7 @@ window.shopProducts = [];
 window.sales = [];
 window.debts = [];
 window.installments = [];
+window.expenses = [];
 window.retailCart = [];
 window.wholesaleCart = [];
 window.editingId = null;
@@ -16,7 +17,8 @@ const moduleLoaders = {
     stock: () => import('./modules/stock.js'),
     users: () => import('./modules/users.js'),
     trade: () => import('./modules/trade.js'),
-    history: () => import('./modules/history.js')
+    history: () => import('./modules/history.js'),
+    stats: () => import('./modules/stats.js')
 };
 
 async function loadModule(moduleName) {
@@ -62,6 +64,7 @@ async function loadAll() {
         window.sales = data.sales || [];
         window.debts = data.debts || [];
         window.installments = data.installments || [];
+        window.expenses = data.expenses || [];
 
         // Инициализация интерфейса после загрузки
         initRates(data.rates);
@@ -81,6 +84,7 @@ async function loadAll() {
         window.sales = JSON.parse(localStorage.getItem('pro_sales')) || [];
         window.debts = JSON.parse(localStorage.getItem('pro_debts')) || [];
         window.installments = JSON.parse(localStorage.getItem('pro_installments')) || [];
+        window.expenses = JSON.parse(localStorage.getItem('pro_expenses')) || [];
         initRates();
 
         // Обновляем текущую активную вкладку
@@ -115,6 +119,7 @@ async function saveAll() {
     localStorage.setItem('pro_sales', JSON.stringify(window.sales));
     localStorage.setItem('pro_debts', JSON.stringify(window.debts));
     localStorage.setItem('pro_installments', JSON.stringify(window.installments));
+    localStorage.setItem('pro_expenses', JSON.stringify(window.expenses));
 
     // 2. Сохраняем в файлы через сервер
     const allData = {
@@ -123,6 +128,7 @@ async function saveAll() {
         sales: window.sales,
         debts: window.debts,
         installments: window.installments,
+        expenses: window.expenses,
         rates: {
             cny: parseFloat(document.getElementById('rateCNY').value) || 1,
             uzs: parseFloat(document.getElementById('rateUZS').value) || 0
@@ -281,6 +287,11 @@ async function switchTab(viewId) {
     if (viewId === 'users') {
         const m = await loadModule('users');
         if (m && m.loadUsers) m.loadUsers();
+    }
+
+    if (viewId === 'stats') {
+        const m = await loadModule('stats');
+        if (m && m.renderStats) m.renderStats();
     }
 }
 

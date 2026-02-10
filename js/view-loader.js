@@ -13,7 +13,8 @@ const viewTemplates = {
     debts: 'views/debts.html',
     installments: 'views/installments.html',
     history: 'views/history.html',
-    users: 'views/users.html'
+    users: 'views/users.html',
+    stats: 'views/stats.html'
 };
 
 /**

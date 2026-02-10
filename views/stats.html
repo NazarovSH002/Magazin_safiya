@@ -1,0 +1,98 @@
+<div id="view-stats" class="view">
+    <div class="grid-stats" style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+        <div class="main-stats">
+            <!-- Profit Cards -->
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div class="card stat-card" style="border-left: 4px solid var(--success);">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Прибыль (Сегодня)</div>
+                    <div id="stats-profit-day" style="font-size: 20px; font-weight: 800; color: var(--success);">0</div>
+                    <div id="stats-sales-day" style="font-size: 11px; margin-top: 5px; color: var(--text-muted);">
+                        Продаж: 0</div>
+                </div>
+                <div class="card stat-card" style="border-left: 4px solid var(--accent);">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Прибыль (Неделя)</div>
+                    <div id="stats-profit-week" style="font-size: 20px; font-weight: 800; color: var(--accent);">0</div>
+                    <div id="stats-sales-week" style="font-size: 11px; margin-top: 5px; color: var(--text-muted);">
+                        Продаж: 0</div>
+                </div>
+                <div class="card stat-card" style="border-left: 4px solid var(--primary);">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Прибыль (Месяц)</div>
+                    <div id="stats-profit-month" style="font-size: 20px; font-weight: 800; color: var(--primary);">0
+                    </div>
+                    <div id="stats-sales-month" style="font-size: 11px; margin-top: 5px; color: var(--text-muted);">
+                        Продаж: 0</div>
+                </div>
+                <div class="card stat-card" style="border-left: 4px solid #f59e0b;">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Прибыль (Общая)</div>
+                    <div id="stats-profit-total" style="font-size: 20px; font-weight: 800; color: #f59e0b;">0</div>
+                    <div id="stats-sales-total" style="font-size: 11px; margin-top: 5px; color: var(--text-muted);">
+                        Продаж: 0</div>
+                </div>
+            </div>
+
+            <!-- Expenses Table -->
+            <div class="card" style="min-height: 400px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 18px; font-weight: 700;">💸 Расходы</h3>
+                    <div class="search-box" style="margin-bottom: 0; width: 250px;">
+                        <input type="text" id="expenseSearch" placeholder="Поиск расходов..." oninput="renderStats()">
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Категория</th>
+                                <th>Описание</th>
+                                <th>Сумма</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-stats">
+            <div class="card">
+                <h3 style="margin-bottom: 20px; text-align: center;">Добавить расход</h3>
+                <div class="form-group">
+                    <label>Дата</label>
+                    <input type="date" id="expDate">
+                </div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <select id="expCategory"
+                        style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-input); color: var(--text); border: 1px solid var(--border);">
+                        <option value="Аренда">Аренда</option>
+                        <option value="Зарплата">Зарплата</option>
+                        <option value="Налоги">Налоги</option>
+                        <option value="Хозтовары">Хозтовары</option>
+                        <option value="Маркетинг">Маркетинг</option>
+                        <option value="Прочее">Прочее</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Сумма (UZS)</label>
+                    <input type="number" id="expAmount" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Комментарий</label>
+                    <input type="text" id="expComment" placeholder="На что потрачено">
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="addExpense()">Сохранить расход</button>
+            </div>
+
+            <div class="card"
+                style="margin-top: 20px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+                <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">💡 Сводка за месяц</div>
+                <div id="stats-summary-text" style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    Загрузка данных...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

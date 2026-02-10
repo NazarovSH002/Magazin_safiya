@@ -48,3 +48,8 @@ window.submitPayment = () => callModuleFn('history', 'submitPayment');
 window.closePaymentModal = () => callModuleFn('history', 'closePaymentModal');
 window.exportHistoryCSV = () => callModuleFn('history', 'exportHistoryCSV');
 window.toggleDetails = (id) => callModuleFn('history', 'toggleDetails', id);
+
+// Stats module wrappers
+window.renderStats = () => callModuleFn('stats', 'renderStats');
+window.addExpense = () => callModuleFn('stats', 'addExpense');
+window.deleteExpense = (id) => callModuleFn('stats', 'deleteExpense', id);
