@@ -2,11 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const MONGODB_URI = process.env.MONGODB_URI;
+const DATA_DIR = path.join(__dirname, 'data');
+
+// Создаем папку data, если её нет
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR);
+}
+
+let isUsingMongoDB = false;
 
 // Подключение к MongoDB
 if (MONGODB_URI) {
@@ -14,24 +23,26 @@ if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI)
         .then(() => {
             console.log('✅ Успешно подключено к MongoDB');
+            isUsingMongoDB = true;
             createDefaultUsers();
         })
         .catch(err => {
-            console.error('❌ КРИТИЧЕСКАЯ ОШИБКА ПОДКЛЮЧЕНИЯ К MONGODB:');
+            console.error('❌ Ошибка подключения к MongoDB, использую локальные файлы:');
             console.error(err.message);
+            isUsingMongoDB = false;
         });
 } else {
-    console.warn('⚠️ MONGODB_URI не установлен в переменных окружения!');
+    console.warn('⚠️ MONGODB_URI не установлен. Переход в автономный режим (локальные JSON файлы).');
+    isUsingMongoDB = false;
 }
 
-// Схема для данных (продукты, продажи и т.д.)
+// Схемы MongoDB
 const DataSchema = new mongoose.Schema({
     key: { type: String, required: true, unique: true },
     value: { type: mongoose.Schema.Types.Mixed, required: true }
 });
 const DataModel = mongoose.model('Data', DataSchema);
 
-// Схема для пользователей
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
@@ -40,32 +51,49 @@ const UserSchema = new mongoose.Schema({
 });
 const UserModel = mongoose.model('User', UserSchema);
 
-// Функция создания дефолтных пользователей
-async function createDefaultUsers() {
-    try {
-        const adminExists = await UserModel.findOne({ username: 'admin' });
-        if (!adminExists) {
-            await UserModel.create({
-                username: 'admin',
-                password: 'admin',
-                role: 'admin',
-                name: 'Администратор'
-            });
-            console.log('👤 Дефолтный админ создан (admin/admin)');
-        }
+// Вспомогательная функция для локальных данных
+function getLocalPath(key) {
+    return path.join(DATA_DIR, `${key}.json`);
+}
 
-        const sellerExists = await UserModel.findOne({ username: 'seller' });
-        if (!sellerExists) {
-            await UserModel.create({
-                username: 'seller',
-                password: '1234',
-                role: 'seller',
-                name: 'Продавец'
-            });
-            console.log('👤 Дефолтный продавец создан (seller/1234)');
+function readLocalData(key, defaultValue = []) {
+    const filePath = getLocalPath(key);
+    if (fs.existsSync(filePath)) {
+        try {
+            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        } catch (e) {
+            return defaultValue;
         }
-    } catch (err) {
-        console.error('❌ Ошибка при создании пользователей:', err);
+    }
+    return defaultValue;
+}
+
+function writeLocalData(key, value) {
+    fs.writeFileSync(getLocalPath(key), JSON.stringify(value, null, 2));
+}
+
+// Функции для работы с пользователями (автоматически определяют режим)
+async function findUser(query) {
+    if (isUsingMongoDB) {
+        return await UserModel.findOne(query);
+    } else {
+        const users = readLocalData('users', [
+            { username: 'admin', password: 'admin', role: 'admin', name: 'Администратор' },
+            { username: 'seller', password: '1234', role: 'seller', name: 'Продавец' }
+        ]);
+        return users.find(u => Object.keys(query).every(k => u[k] === query[k]));
+    }
+}
+
+async function createDefaultUsers() {
+    if (isUsingMongoDB) {
+        try {
+            const adminExists = await UserModel.findOne({ username: 'admin' });
+            if (!adminExists) {
+                await UserModel.create({ username: 'admin', password: 'admin', role: 'admin', name: 'Администратор' });
+                console.log('👤 Дефолтный админ создан в MongoDB');
+            }
+        } catch (err) { console.error(err); }
     }
 }
 
@@ -75,43 +103,46 @@ app.use(express.static(__dirname));
 
 // API для авторизации
 app.post('/api/login', async (req, res) => {
-    // Проверка состояния базы данных
-    if (mongoose.connection.readyState !== 1) {
-        return res.status(503).json({ success: false, error: 'База данных еще подключается. Попробуйте через 10 секунд.' });
-    }
-
     const { username, password } = req.body;
-    console.log(`Попытка входа: ${username}`);
+    console.log(`Попытка входа: ${username} (${isUsingMongoDB ? 'MongoDB' : 'Local'})`);
 
     try {
-        const user = await UserModel.findOne({ username, password });
+        const user = await findUser({ username, password });
         if (user) {
-            console.log(`✅ Вход выполнен: ${username}`);
             res.json({ success: true, user: { username: user.username, role: user.role, name: user.name } });
         } else {
-            console.log(`❌ Неверные данные для: ${username}`);
             res.status(401).json({ success: false, error: 'Неверный логин или пароль' });
         }
     } catch (error) {
-        console.error('Ошибка логина:', error);
-        res.status(500).json({ error: 'Ошибка сервера при поиске пользователя' });
+        res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
 
 // Загрузка данных
 app.get('/api/load', async (req, res) => {
     try {
-        const allDocs = await DataModel.find({});
-        const data = {};
-        allDocs.forEach(doc => { data[doc.key] = doc.value; });
-        res.json({
-            products: data.products || [],
-            shop: data.shop || [],
-            sales: data.sales || [],
-            debts: data.debts || [],
-            installments: data.installments || [],
-            rates: data.rates || { cny: 7.2, uzs: 12850 }
-        });
+        if (isUsingMongoDB) {
+            const allDocs = await DataModel.find({});
+            const data = {};
+            allDocs.forEach(doc => { data[doc.key] = doc.value; });
+            res.json({
+                products: data.products || [],
+                shop: data.shop || [],
+                sales: data.sales || [],
+                debts: data.debts || [],
+                installments: data.installments || [],
+                rates: data.rates || { cny: 7.2, uzs: 12850 }
+            });
+        } else {
+            res.json({
+                products: readLocalData('products'),
+                shop: readLocalData('shop'),
+                sales: readLocalData('sales'),
+                debts: readLocalData('debts'),
+                installments: readLocalData('installments'),
+                rates: readLocalData('rates', { cny: 7.2, uzs: 12850 })
+            });
+        }
     } catch (error) {
         res.status(500).json({ error: 'Ошибка загрузки' });
     }
@@ -120,10 +151,16 @@ app.get('/api/load', async (req, res) => {
 // Сохранение данных
 app.post('/api/save', async (req, res) => {
     try {
-        const operations = Object.entries(req.body).map(([key, value]) => ({
-            updateOne: { filter: { key }, update: { key, value }, upsert: true }
-        }));
-        if (operations.length > 0) await DataModel.bulkWrite(operations);
+        if (isUsingMongoDB) {
+            const operations = Object.entries(req.body).map(([key, value]) => ({
+                updateOne: { filter: { key }, update: { key, value }, upsert: true }
+            }));
+            if (operations.length > 0) await DataModel.bulkWrite(operations);
+        } else {
+            Object.entries(req.body).forEach(([key, value]) => {
+                writeLocalData(key, value);
+            });
+        }
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сохранения' });
