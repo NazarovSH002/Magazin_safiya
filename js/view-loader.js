@@ -5,6 +5,7 @@ const viewContainer = document.getElementById('views-container');
 
 // Карта шаблонов
 const viewTemplates = {
+    dashboard: 'views/dashboard.html',
     users: 'views/users.html'
 };
 

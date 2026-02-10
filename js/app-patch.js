@@ -1,6 +1,6 @@
-// Патч для app.js - добавить в конец файла или перед закрывающей скобкой switchTab
+// Патч для app.js - добавляет загрузку HTML-шаблонов
 
-// Обновленная логика для users
+// Обновленная логика для загрузки HTML-шаблонов
 const originalSwitchTab = window.switchTab;
 if (originalSwitchTab) {
     window.switchTab = function (viewId) {
@@ -8,8 +8,13 @@ if (originalSwitchTab) {
         originalSwitchTab(viewId);
 
         // Дополнительная логика для загрузки HTML-шаблонов
-        if (viewId === 'users' && window.loadViewTemplate) {
-            window.loadViewTemplate('users');
+        if (window.loadViewTemplate) {
+            if (viewId === 'dashboard') {
+                window.loadViewTemplate('dashboard');
+            }
+            if (viewId === 'users') {
+                window.loadViewTemplate('users');
+            }
         }
     };
 }
