@@ -314,6 +314,7 @@ window.format = format;
 window.fetchRates = fetchRates;
 window.loadModule = loadModule;
 window.saveAll = saveAll;
+window.saveRates = saveRates;
 window.switchTab = switchTab;
 window.handleLogin = handleLogin;
 window.logout = logout;
