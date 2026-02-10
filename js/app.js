@@ -14,7 +14,9 @@ const loadedModules = {};
 const moduleLoaders = {
     dashboard: () => import('./modules/dashboard.js'),
     stock: () => import('./modules/stock.js'),
-    users: () => import('./modules/users.js')
+    users: () => import('./modules/users.js'),
+    trade: () => import('./modules/trade.js'),
+    history: () => import('./modules/history.js')
 };
 
 async function loadModule(moduleName) {
@@ -330,6 +332,8 @@ window.closeUserModal = function () {
 window.saveUser = function () {
     loadModule('users').then(m => m && m.saveUser && m.saveUser());
 };
- 
- w i n d o w . f o r m a t   =   f o r m a t ;   w i n d o w . f e t c h R a t e s   =   f e t c h R a t e s ;  
- 
+
+window.format = format;
+window.fetchRates = fetchRates;
+window.loadModule = loadModule;
+window.saveAll = saveAll;

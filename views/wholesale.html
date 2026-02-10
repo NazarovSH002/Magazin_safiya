@@ -1,0 +1,32 @@
+<div id="view-wholesale" class="view">
+    <div class="grid-trade">
+        <div class="card">
+            <div class="search-box">
+                <input type="text" id="wholesaleSearch" placeholder="Поиск товара для опта..."
+                    oninput="renderWholesaleList()">
+            </div>
+            <div id="wholesale-list"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; max-height: 700px; overflow-y: auto;">
+            </div>
+        </div>
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Оптовый заказ</h3>
+            <div class="cart-list" id="wholesale-cart"></div>
+            <div style="border-top: 2px solid var(--border); padding-top: 15px;">
+                <input type="text" id="wholesaleCustomer" placeholder="Клиент (ФИО)"
+                    style="width: 100%; margin-bottom: 10px;">
+                <input type="text" id="wholesaleComment" placeholder="Комментарий к продаже"
+                    style="width: 100%; margin-bottom: 10px;">
+                <span
+                    style="font-size: 20px; font-weight: 700; color: var(--accent); display: block; margin-bottom: 15px;"
+                    id="wholesale-total">0 UZS</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <button class="btn btn-primary" onclick="completeSale('wholesale', false)">Оплата</button>
+                    <button class="btn btn-danger" onclick="completeSale('wholesale', true, 'debt')">В долг</button>
+                    <button class="btn btn-warning" onclick="completeSale('wholesale', true, 'installment')"
+                        style="background:var(--accent); color:white;">Рассрочка</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

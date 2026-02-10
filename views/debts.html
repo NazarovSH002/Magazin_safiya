@@ -1,0 +1,22 @@
+<div id="view-debts" class="view">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 18px; font-weight: 700;">👥 Активные долги</h3>
+            <button class="btn btn-primary btn-sm" onclick="printReport('debts')">🖨️ Печать</button>
+        </div>
+        <table style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Клиент</th>
+                    <th>Товары</th>
+                    <th>Сумма долга</th>
+                    <th>Остаток</th>
+                    <th>Статус</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody id="debts-tbody"></tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,23 @@
+<div id="view-installments" class="view">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 18px; font-weight: 700;">💳 Активная рассрочка</h3>
+            <button class="btn btn-primary btn-sm" onclick="printReport('installments')">🖨️ Печать</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Дата начала</th>
+                        <th>Клиент</th>
+                        <th>Сумма</th>
+                        <th>Остаток</th>
+                        <th>Статус</th>
+                        <th style="width: 150px;">Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="installments-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>

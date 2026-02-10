@@ -1,0 +1,79 @@
+<div id="view-stock" class="view">
+    <div style="display: flex; gap: 12px; margin-bottom: 20px; justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="downloadTemplate()">Шаблон</button>
+        <button class="btn btn-primary" onclick="document.getElementById('importInput').click()">🚀 Импорт CSV</button>
+        <input type="file" id="importInput" style="display: none;" onchange="importCSV(event)">
+    </div>
+    <div class="grid-stock">
+        <div class="card">
+            <h3 style="margin-bottom: 20px; text-align: center;">Новый товар</h3>
+            <div class="form-group">
+                <input type="text" id="pName" placeholder="Название товара">
+            </div>
+            <div class="form-group">
+                <input type="number" id="pQty" placeholder="Количество">
+            </div>
+            <div class="form-group">
+                <label style="font-size: 12px; color: var(--text-muted);">Цена Закупки (¥)</label>
+                <input type="number" id="pPriceCNY" value="0.0">
+            </div>
+            <div class="form-group">
+                <label style="font-size: 12px; color: var(--text-muted);">Цена в суммах (UZS)</label>
+                <input type="number" id="pPriceUZS" value="0">
+            </div>
+            <button class="btn btn-outline" style="width: 100%; margin-bottom: 10px;"
+                onclick="calculateTarget()">Рассчитать Цену</button>
+            <button class="btn btn-primary" style="width: 100%;" onclick="addOrUpdateProduct()">Сохранить на
+                складе</button>
+
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--border);">
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Пример таблицы для Excel:</p>
+                <table style="width: 100%; font-size: 10px; border-collapse: collapse; background: rgba(0,0,0,0.2);">
+                    <tr style="background: var(--bg-input);">
+                        <th style="padding: 4px; border: 1px solid var(--border);">Name</th>
+                        <th style="padding: 4px; border: 1px solid var(--border);">Quantity</th>
+                        <th style="padding: 4px; border: 1px solid var(--border);">Cost_CNY</th>
+                        <th style="padding: 4px; border: 1px solid var(--border);">Price_UZS</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px; border: 1px solid var(--border);">iPhone 15</td>
+                        <td style="padding: 4px; border: 1px solid var(--border);">10</td>
+                        <td style="padding: 4px; border: 1px solid var(--border);">5200</td>
+                        <td style="padding: 4px; border: 1px solid var(--border);">15000000</td>
+                    </tr>
+                </table>
+                <p style="font-size: 10px; color: var(--accent); margin-top: 8px;">* Price_UZS можно не заполнять</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="font-size: 18px; font-weight: 700;">📦 Товар на складе</h3>
+                <button class="btn btn-primary btn-sm" onclick="printReport('stock')">🖨️ Печать</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div class="search-box" style="margin-bottom: 0; flex: 1;">
+                    <input type="text" id="stockSearch" placeholder="Поиск по складу..." oninput="renderStock()">
+                </div>
+                <button id="multiDeleteBtn" class="btn btn-danger" style="display: none;" onclick="bulkDelete()">Удалить
+                    выбранные</button>
+            </div>
+            <div class="table-container" style="max-height: 600px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;"><input type="checkbox" id="selectAll"
+                                    onclick="toggleAllCheckboxes(this.checked)"></th>
+                            <th>Товар на складе</th>
+                            <th>Кол-во</th>
+                            <th>Закуп</th>
+                            <th>Цена в суммах</th>
+                            <th style="width: 140px;">Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

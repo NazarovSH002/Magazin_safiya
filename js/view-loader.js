@@ -3,9 +3,16 @@
 const viewCache = {};
 const viewContainer = document.getElementById('views-container');
 
-// Карта шаблонов
+// Карта шаблонов - все вкладки будут загружаться динамически
 const viewTemplates = {
     dashboard: 'views/dashboard.html',
+    stock: 'views/stock.html',
+    shop: 'views/shop.html',
+    retail: 'views/retail.html',
+    wholesale: 'views/wholesale.html',
+    debts: 'views/debts.html',
+    installments: 'views/installments.html',
+    history: 'views/history.html',
     users: 'views/users.html'
 };
 
@@ -33,10 +40,6 @@ async function loadViewTemplate(viewName) {
         }
 
         const html = await response.text();
-
-        // Создаем временный контейнер для парсинга HTML
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
 
         // Вставляем содержимое в контейнер
         if (viewContainer) {

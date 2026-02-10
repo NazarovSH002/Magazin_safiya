@@ -1,4 +1,9 @@
-function renderDebts() {
+// === МОДУЛЬ ИСТОРИИ, ДОЛГОВ И РАССРОЧКИ ===
+
+const format = window.format;
+
+export function renderDebts() {
+    const debts = window.debts || [];
     const tbody = document.getElementById('debts-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -18,7 +23,7 @@ function renderDebts() {
             <td><span class="badge" style="background:rgba(245, 158, 11, 0.2); color:var(--accent); border: 1px solid rgba(245, 158, 11, 0.3);">${remaining <= 0 ? 'Погашен' : 'Не оплачен'}</span></td>
             <td>
                 <div class="actions-cell">
-                    <button class="btn btn-success btn-sm" onclick="settleDebt(${idx})">Погасить</button>
+                    <button class="btn btn-success btn-sm" onclick="HistoryModule.settleDebt(${idx})">Погасить</button>
                 </div>
             </td>
         `;
@@ -61,17 +66,17 @@ function renderDebts() {
     });
 }
 
-function settleDebt(idx) {
-    const debt = debts[idx];
+export function settleDebt(idx) {
+    const debt = window.debts[idx];
     openPaymentModal(idx, 'debt', debt.customer, debt.total - (debt.paid || 0));
 }
 
-function payInstallment(idx) {
-    const ins = installments[idx];
+export function payInstallment(idx) {
+    const ins = window.installments[idx];
     openPaymentModal(idx, 'installment', ins.customer, ins.total - (ins.paid || 0));
 }
 
-function openPaymentModal(idx, type, customer, remaining) {
+export function openPaymentModal(idx, type, customer, remaining) {
     document.getElementById('payment-modal-title').innerText = `Платеж: ${customer} (Остаток: ${format(remaining)})`;
     document.getElementById('payment-item-idx').value = idx;
     document.getElementById('payment-item-type').value = type;
@@ -82,11 +87,11 @@ function openPaymentModal(idx, type, customer, remaining) {
     document.getElementById('payment-modal').classList.add('active');
 }
 
-function closePaymentModal() {
+export function closePaymentModal() {
     document.getElementById('payment-modal').classList.remove('active');
 }
 
-function submitPayment() {
+export async function submitPayment() {
     const idx = parseInt(document.getElementById('payment-item-idx').value);
     const type = document.getElementById('payment-item-type').value;
     const amount = parseInt(document.getElementById('payment-amount').value);
@@ -95,7 +100,7 @@ function submitPayment() {
 
     if (!amount || isNaN(amount)) return alert("Введите корректную сумму");
 
-    const item = type === 'debt' ? debts[idx] : installments[idx];
+    const item = type === 'debt' ? window.debts[idx] : window.installments[idx];
     if (!item) return closePaymentModal();
 
     if (!item.payments) item.payments = [];
@@ -104,10 +109,10 @@ function submitPayment() {
     item.paid = (item.paid || 0) + amount;
 
     if (item.paid >= item.total) {
-        const saleH = sales.find(s => s.id === item.id);
+        const saleH = window.sales.find(s => s.id === item.id);
         if (saleH) saleH.type = type === 'debt' ? "ОПЛАЧЕН (Был долг)" : "ВЫПЛАЧЕНО (Рассрочка)";
 
-        if (type === 'debt') debts.splice(idx, 1);
+        if (type === 'debt') window.debts.splice(idx, 1);
         alert("Полностью погашено!");
     } else {
         alert(`Платеж принят: ${format(amount)}. Остаток: ${format(item.total - item.paid)}`);
@@ -116,10 +121,11 @@ function submitPayment() {
     closePaymentModal();
     if (type === 'debt') renderDebts();
     else renderInstallments();
-    saveAll();
+    if (window.saveAll) await window.saveAll();
 }
 
-function renderInstallments() {
+export function renderInstallments() {
+    const installments = window.installments || [];
     const tbody = document.getElementById('installments-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -139,7 +145,7 @@ function renderInstallments() {
             <td><span class="badge" style="background:rgba(59, 130, 246, 0.1); color:#3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">${remaining <= 0 ? 'Выплачено' : 'Активна'}</span></td>
             <td>
                 <div class="actions-cell">
-                    <button class="btn btn-primary btn-sm" onclick="payInstallment(${idx})">Внести платеж</button>
+                    <button class="btn btn-primary btn-sm" onclick="HistoryModule.payInstallment(${idx})">Внести платеж</button>
                 </div>
             </td>
         `;
@@ -182,7 +188,8 @@ function renderInstallments() {
     });
 }
 
-function renderHistory() {
+export function renderHistory() {
+    const sales = window.sales || [];
     const tbody = document.getElementById('history-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -202,8 +209,8 @@ function renderHistory() {
             <td><span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); border: 1px solid var(--border);">${s.type}</span></td>
             <td>
                 <div class="actions-cell" style="justify-content: flex-end;">
-                    <button class="btn btn-primary btn-sm" onclick="printReceipt(${s.id})" title="Печать чека">🖨️</button>
-                    <button class="btn-icon-danger" onclick="deleteHistory(${s.id})" title="Удалить">×</button>
+                    <button class="btn btn-primary btn-sm" onclick="HistoryModule.printReceipt(${s.id})" title="Печать чека">🖨️</button>
+                    <button class="btn-icon-danger" onclick="HistoryModule.deleteHistory(${s.id})" title="Удалить">×</button>
                 </div>
             </td>
         `;
@@ -235,13 +242,13 @@ function renderHistory() {
     });
 }
 
-function toggleDetails(id) {
+export function toggleDetails(id) {
     const el = document.getElementById(`details-${id}`);
     if (el) el.classList.toggle('active');
 }
 
-function printReceipt(id) {
-    const s = sales.find(x => x.id === id);
+export function printReceipt(id) {
+    const s = window.sales.find(x => x.id === id);
     if (!s) return;
 
     const printSection = document.getElementById('print-section');
@@ -348,24 +355,23 @@ function printReceipt(id) {
     printSection.style.display = 'none';
 }
 
-function deleteHistory(id) {
+export async function deleteHistory(id) {
     if (confirm("Удалить запись из истории? (Остатки не вернутся)")) {
-        sales = sales.filter(s => s.id !== id);
+        window.sales = window.sales.filter(s => s.id !== id);
         renderHistory();
-        saveAll();
+        if (window.saveAll) await window.saveAll();
     }
 }
 
-function exportHistoryCSV() {
+export function exportHistoryCSV() {
     let csv = "\ufeffДата;Клиент;Сумма;Тип;Товары\n";
-    sales.forEach(s => {
+    window.sales.forEach(s => {
         let itemsStr = "";
         if (Array.isArray(s.items)) {
             itemsStr = s.items.map(i => `${i.name} (${i.cartQty}шт)`).join(', ');
         } else {
             itemsStr = s.items;
         }
-        // Очистка от кавычек и точек с запятой для корректности CSV
         csv += `${s.date};${s.customer};${s.total};${s.type};"${itemsStr.replace(/"/g, '""')}"\n`;
     });
 
@@ -375,7 +381,8 @@ function exportHistoryCSV() {
     link.download = `history_${new Date().toLocaleDateString()}.csv`;
     link.click();
 }
-function printReport(type) {
+
+export function printReport(type) {
     const printSection = document.getElementById('print-section');
     printSection.style.display = 'block';
 
@@ -386,7 +393,7 @@ function printReport(type) {
     if (type === 'stock') {
         title = "Отчет: Остатки на складе";
         headers = ["Наименование", "Кол-во", "Закуп ($)", "Цена (сум)"];
-        rowsHtml = products.map(p => `
+        rowsHtml = window.products.map(p => `
             <tr>
                 <td>${p.name}</td>
                 <td style="text-align:center">${p.qty}</td>
@@ -397,7 +404,7 @@ function printReport(type) {
     } else if (type === 'shop') {
         title = "Отчет: Наличие в магазине";
         headers = ["Наименование", "Кол-во", "Цена (сум)"];
-        rowsHtml = shopProducts.map(s => `
+        rowsHtml = window.shopProducts.map(s => `
             <tr>
                 <td>${s.name}</td>
                 <td style="text-align:center">${s.qty}</td>
@@ -407,7 +414,7 @@ function printReport(type) {
     } else if (type === 'debts') {
         title = "Отчет: Список должников";
         headers = ["Дата", "Клиент", "Сумма", "Остаток"];
-        rowsHtml = debts.map(d => `
+        rowsHtml = window.debts.map(d => `
             <tr>
                 <td>${d.date.split(',')[0]}</td>
                 <td>${d.customer}</td>
@@ -418,7 +425,7 @@ function printReport(type) {
     } else if (type === 'installments') {
         title = "Отчет: Рассрочка";
         headers = ["Дата", "Клиент", "Сумма", "Остаток"];
-        rowsHtml = installments.map(ins => `
+        rowsHtml = window.installments.map(ins => `
             <tr>
                 <td>${ins.date.split(',')[0]}</td>
                 <td>${ins.customer}</td>
@@ -431,7 +438,7 @@ function printReport(type) {
         const selectedDate = dateInput ? new Date(dateInput.value).toLocaleDateString() : new Date().toLocaleDateString();
         title = `Отчет по рознице за ${selectedDate}`;
         headers = ["Чек", "Время", "Клиент", "Тип", "Сумма"];
-        const daySales = sales.filter(s => s.date.includes(selectedDate));
+        const daySales = window.sales.filter(s => s.date.includes(selectedDate));
         rowsHtml = daySales.map(s => `
             <tr>
                 <td>#${s.id.toString().slice(-4)}</td>
@@ -463,7 +470,6 @@ function printReport(type) {
                 </thead>
                 <tbody>
                     ${rowsHtml.split('</tr>').filter(r => r.trim()).map((row, idx) => {
-        // Добавляем порядковый номер и проставляем границы + глубокий черный цвет для всех ячеек в строке
         let styledRow = row.replace('<tr>', `<tr><td style="padding: 8px; border: 1px solid #000; text-align: center; color: #000 !important; font-weight: 500;">${idx + 1}</td>`);
         return styledRow.replace(/<td/g, '<td style="padding: 8px; border: 1px solid #000; color: #000 !important; font-weight: 500;"');
     }).join('')}

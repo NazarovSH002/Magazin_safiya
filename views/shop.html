@@ -1,0 +1,28 @@
+<div id="view-shop" class="view">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 18px; font-weight: 700;">🏪 Товар в магазине</h3>
+            <button class="btn btn-primary btn-sm" onclick="printReport('shop')">🖨️ Печать</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Наличие в магазине (торговый зал)</h3>
+            <div class="search-box" style="width: 300px; margin-bottom: 0;">
+                <input type="text" id="shopSearch" placeholder="Поиск по магазину..." oninput="renderShopInventory()">
+            </div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Название товара</th>
+                        <th>В магазине</th>
+                        <th>Цена в суммах</th>
+                        <th>Дата перемещения</th>
+                        <th style="width: 100px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="shop-inventory-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
