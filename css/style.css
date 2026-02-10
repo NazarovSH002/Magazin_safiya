@@ -745,6 +745,16 @@ tr:hover td {
         max-width: 95%;
         padding: 24px 16px;
     }
+
+    .grid-stats {
+        grid-template-columns: 1fr !important;
+        gap: 15px;
+    }
+
+    .sidebar-stats {
+        order: -1;
+        /* Sidebar (add expense) goes first on mobile */
+    }
 }
 
 @media (max-width: 480px) {

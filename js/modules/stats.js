@@ -44,7 +44,8 @@ function calculateFinancials() {
     const getProfit = (sale) => {
         let saleProfit = 0;
         sale.items.forEach(item => {
-            const costUZS = (item.priceCNY / rates.cny) * rates.uzs;
+            const priceCNY = item.priceCNY || 0;
+            const costUZS = (priceCNY / rates.cny) * rates.uzs;
             const itemProfit = (item.priceUZS - costUZS) * item.cartQty;
             saleProfit += itemProfit;
         });
