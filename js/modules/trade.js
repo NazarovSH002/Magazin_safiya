@@ -138,6 +138,7 @@ export async function completeSale(type, isDebt, debtType = 'debt') {
 
     const saleData = {
         id: Date.now(),
+        timestamp: saleDate.getTime(),
         date: saleDate.toLocaleString(),
         customer,
         items: [...cart],

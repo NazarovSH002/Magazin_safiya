@@ -33,8 +33,11 @@ export function renderStats() {
 function calculateFinancials() {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)));
+
+    const weekCopy = new Date(now);
+    const startOfWeek = new Date(weekCopy.setDate(weekCopy.getDate() - weekCopy.getDay() + (weekCopy.getDay() === 0 ? -6 : 1)));
     startOfWeek.setHours(0, 0, 0, 0);
+
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const rates = window.fetchRates();
@@ -60,7 +63,19 @@ function calculateFinancials() {
     };
 
     sales.forEach(s => {
-        const sDate = new Date(s.id); // Используем ID как timestamp для точности даты
+        // Определяем дату продажи: либо по новому полю timestamp, либо пытаемся распарсить строку date
+        let sDate;
+        if (s.timestamp) {
+            sDate = new Date(s.timestamp);
+        } else {
+            // Фолбек для старых данных: пытаемся распарсить "DD.MM.YYYY, HH:MM:SS"
+            const parts = s.date.split(',')[0].split('.');
+            if (parts.length === 3) {
+                sDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            } else {
+                sDate = new Date(s.id); // Крайний случай
+            }
+        }
         const p = getProfit(s);
 
         stats.total.profit += p;
@@ -82,7 +97,9 @@ function calculateFinancials() {
 
     // Вычитаем расходы
     expenses.forEach(ex => {
-        const exDate = new Date(ex.date);
+        // Парсим YYYY-MM-DD корректно для локальной даты
+        const exParts = ex.date.split('-');
+        const exDate = new Date(exParts[0], exParts[1] - 1, exParts[2]);
         stats.total.profit -= ex.amount;
 
         if (exDate >= startOfDay) stats.day.profit -= ex.amount;
