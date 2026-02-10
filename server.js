@@ -10,14 +10,18 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 // Подключение к MongoDB
 if (MONGODB_URI) {
+    console.log('📡 Попытка подключения к MongoDB...');
     mongoose.connect(MONGODB_URI)
         .then(() => {
-            console.log('✅ Подключено к MongoDB');
-            createDefaultUsers(); // Создаем пользователей сразу после подключения
+            console.log('✅ Успешно подключено к MongoDB');
+            createDefaultUsers();
         })
-        .catch(err => console.error('❌ Ошибка подключения к MongoDB:', err));
+        .catch(err => {
+            console.error('❌ КРИТИЧЕСКАЯ ОШИБКА ПОДКЛЮЧЕНИЯ К MONGODB:');
+            console.error(err.message);
+        });
 } else {
-    console.warn('⚠️ MONGODB_URI не установлен!');
+    console.warn('⚠️ MONGODB_URI не установлен в переменных окружения!');
 }
 
 // Схема для данных (продукты, продажи и т.д.)
