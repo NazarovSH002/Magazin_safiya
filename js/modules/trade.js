@@ -52,7 +52,7 @@ let localRetailCart = [];
 let localWholesaleCart = [];
 
 export function addToCart(p, type) {
-    const cart = type === 'retail' ? localRetailCart : localWholesaleCart;
+    const cart = type === 'retail' ? window.retailCart : window.wholesaleCart;
     const existing = cart.find(item => item.id === p.id);
     if (existing) {
         if (existing.cartQty < p.qty) {
@@ -66,7 +66,7 @@ export function addToCart(p, type) {
 }
 
 export function updateCartItem(id, type, field, value) {
-    const cart = type === 'retail' ? localRetailCart : localWholesaleCart;
+    const cart = type === 'retail' ? window.retailCart : window.wholesaleCart;
     const item = cart.find(c => c.id === id);
     if (item) {
         if (field === 'qty') {
@@ -80,13 +80,13 @@ export function updateCartItem(id, type, field, value) {
 }
 
 export function removeFromCart(id, type) {
-    if (type === 'retail') localRetailCart = localRetailCart.filter(c => c.id !== id);
-    else localWholesaleCart = localWholesaleCart.filter(c => c.id !== id);
+    if (type === 'retail') window.retailCart = window.retailCart.filter(c => c.id !== id);
+    else window.wholesaleCart = window.wholesaleCart.filter(c => c.id !== id);
     renderCart(type);
 }
 
 export function renderCart(type) {
-    const cart = type === 'retail' ? localRetailCart : localWholesaleCart;
+    const cart = type === 'retail' ? window.retailCart : window.wholesaleCart;
     const listId = type === 'retail' ? 'retail-cart' : 'wholesale-cart';
     const totalId = type === 'retail' ? 'retail-total' : 'wholesale-total';
     const list = document.getElementById(listId);
@@ -115,7 +115,7 @@ export function renderCart(type) {
 }
 
 export async function completeSale(type, isDebt, debtType = 'debt') {
-    const cart = type === 'retail' ? localRetailCart : localWholesaleCart;
+    const cart = type === 'retail' ? window.retailCart : window.wholesaleCart;
     if (cart.length === 0) return alert("Чек пуст");
 
     let customer = "Розница";
@@ -165,12 +165,12 @@ export async function completeSale(type, isDebt, debtType = 'debt') {
     }
 
     if (type === 'retail') {
-        localRetailCart = [];
+        window.retailCart = [];
         if (document.getElementById('retailComment')) document.getElementById('retailComment').value = '';
         if (document.getElementById('retailDate')) document.getElementById('retailDate').value = '';
         renderRetailList();
     } else {
-        localWholesaleCart = [];
+        window.wholesaleCart = [];
         if (document.getElementById('wholesaleCustomer')) document.getElementById('wholesaleCustomer').value = '';
         if (document.getElementById('wholesaleComment')) document.getElementById('wholesaleComment').value = '';
         renderWholesaleList();

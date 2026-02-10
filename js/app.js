@@ -1,13 +1,13 @@
 // --- ГЛОБАЛЬНОЕ СОСТОЯНИЕ ---
-let products = [];
-let shopProducts = [];
-let sales = [];
-let debts = [];
-let installments = [];
-let retailCart = [];
-let wholesaleCart = [];
-let editingId = null;
-let currentUser = JSON.parse(localStorage.getItem('pro_user')) || null;
+window.products = [];
+window.shopProducts = [];
+window.sales = [];
+window.debts = [];
+window.installments = [];
+window.retailCart = [];
+window.wholesaleCart = [];
+window.editingId = null;
+window.currentUser = JSON.parse(localStorage.getItem('pro_user')) || null;
 
 // Система ленивой загрузки модулей
 const loadedModules = {};
@@ -49,7 +49,7 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 
 // Экспортируем в window для доступа из модулей
 window.API_URL = API_URL;
-window.currentUser = currentUser;
+// currentUser уже в window
 
 // Загрузка данных с сервера
 async function loadAll() {
@@ -57,11 +57,11 @@ async function loadAll() {
         const response = await fetch(`${API_URL}/load`);
         const data = await response.json();
 
-        products = data.products || [];
-        shopProducts = data.shop || [];
-        sales = data.sales || [];
-        debts = data.debts || [];
-        installments = data.installments || [];
+        window.products = data.products || [];
+        window.shopProducts = data.shop || [];
+        window.sales = data.sales || [];
+        window.debts = data.debts || [];
+        window.installments = data.installments || [];
 
         // Инициализация интерфейса после загрузки
         initRates(data.rates);
@@ -76,11 +76,11 @@ async function loadAll() {
     } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
         // Резервный вариант: localStorage, если сервер не запущен
-        products = JSON.parse(localStorage.getItem('pro_products')) || [];
-        shopProducts = JSON.parse(localStorage.getItem('pro_shop')) || [];
-        sales = JSON.parse(localStorage.getItem('pro_sales')) || [];
-        debts = JSON.parse(localStorage.getItem('pro_debts')) || [];
-        installments = JSON.parse(localStorage.getItem('pro_installments')) || [];
+        window.products = JSON.parse(localStorage.getItem('pro_products')) || [];
+        window.shopProducts = JSON.parse(localStorage.getItem('pro_shop')) || [];
+        window.sales = JSON.parse(localStorage.getItem('pro_sales')) || [];
+        window.debts = JSON.parse(localStorage.getItem('pro_debts')) || [];
+        window.installments = JSON.parse(localStorage.getItem('pro_installments')) || [];
         initRates();
 
         // Обновляем текущую активную вкладку
@@ -110,19 +110,19 @@ function saveRates() {
 
 async function saveAll() {
     // 1. Сохраняем в localStorage (для подстраховки)
-    localStorage.setItem('pro_products', JSON.stringify(products));
-    localStorage.setItem('pro_shop', JSON.stringify(shopProducts));
-    localStorage.setItem('pro_sales', JSON.stringify(sales));
-    localStorage.setItem('pro_debts', JSON.stringify(debts));
-    localStorage.setItem('pro_installments', JSON.stringify(installments));
+    localStorage.setItem('pro_products', JSON.stringify(window.products));
+    localStorage.setItem('pro_shop', JSON.stringify(window.shopProducts));
+    localStorage.setItem('pro_sales', JSON.stringify(window.sales));
+    localStorage.setItem('pro_debts', JSON.stringify(window.debts));
+    localStorage.setItem('pro_installments', JSON.stringify(window.installments));
 
     // 2. Сохраняем в файлы через сервер
     const allData = {
-        products,
-        shop: shopProducts,
-        sales,
-        debts,
-        installments,
+        products: window.products,
+        shop: window.shopProducts,
+        sales: window.sales,
+        debts: window.debts,
+        installments: window.installments,
         rates: {
             cny: parseFloat(document.getElementById('rateCNY').value) || 1,
             uzs: parseFloat(document.getElementById('rateUZS').value) || 0
@@ -142,7 +142,7 @@ async function saveAll() {
 
 // Запускаем загрузку при старте
 window.onload = () => {
-    if (currentUser) {
+    if (window.currentUser) {
         showApp();
         loadAll();
     }
@@ -162,8 +162,8 @@ async function handleLogin() {
         const data = await response.json();
 
         if (data.success) {
-            currentUser = data.user;
-            localStorage.setItem('pro_user', JSON.stringify(currentUser));
+            window.currentUser = data.user;
+            localStorage.setItem('pro_user', JSON.stringify(window.currentUser));
             showApp();
             loadAll();
         } else {
@@ -182,7 +182,7 @@ function showApp() {
 }
 
 function applyRoleLimits() {
-    if (currentUser && currentUser.role === 'seller') {
+    if (window.currentUser && window.currentUser.role === 'seller') {
         // Скрываем вкладки для продавца
         const forbiddenTabs = ['dashboard', 'stock', 'shop', 'history', 'debts', 'installments', 'users'];
         document.querySelectorAll('.tab').forEach(tab => {
@@ -193,7 +193,7 @@ function applyRoleLimits() {
         });
         // Переключаем на розницу по умолчанию
         switchTab('retail');
-    } else if (currentUser && currentUser.role === 'admin') {
+    } else if (window.currentUser && window.currentUser.role === 'admin') {
         // Админу показываем всё
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('hidden'));
         switchTab('dashboard'); // Сразу переходим на дашборд

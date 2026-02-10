@@ -17,6 +17,8 @@ window.toggleAllCheckboxes = (checked) => callModuleFn('stock', 'toggleAllCheckb
 window.bulkDelete = () => callModuleFn('stock', 'bulkDelete');
 window.downloadTemplate = () => callModuleFn('stock', 'downloadTemplate');
 window.importCSV = (event) => callModuleFn('stock', 'importCSV', event);
+window.renderStock = () => callModuleFn('stock', 'renderStock');
+window.renderShopInventory = () => callModuleFn('stock', 'renderShopInventory');
 window.printReport = (type) => callModuleFn('history', 'printReport', type); // Migrated to history module
 
 // Users module wrappers

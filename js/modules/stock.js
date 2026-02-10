@@ -7,24 +7,47 @@ export function calculateTarget() {
 }
 
 export function addOrUpdateProduct() {
-    const name = document.getElementById('pName').value.trim();
-    const qty = parseInt(document.getElementById('pQty').value) || 0;
-    const cny = parseFloat(document.getElementById('pPriceCNY').value) || 0;
-    const uzs = parseInt(document.getElementById('pPriceUZS').value) || 0;
+    const nameEl = document.getElementById('pName');
+    const qtyEl = document.getElementById('pQty');
+    const cnyEl = document.getElementById('pPriceCNY');
+    const uzsEl = document.getElementById('pPriceUZS');
 
-    if (!name) return alert("Введите название");
+    if (!nameEl) return console.error("Element pName not found");
+
+    const name = nameEl.value.trim();
+    const qty = parseInt(qtyEl.value) || 0;
+    const cny = parseFloat(cnyEl.value) || 0;
+    const uzs = parseInt(uzsEl.value) || 0;
+
+    if (!name) return alert("Введите название товара");
+
+    if (!window.products) window.products = [];
 
     if (window.editingId) {
         const idx = window.products.findIndex(p => p.id === window.editingId);
-        window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, priceUZS: uzs, date: new Date().toLocaleString() };
+        if (idx !== -1) {
+            window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, priceUZS: uzs, date: new Date().toLocaleString() };
+        }
         window.editingId = null;
     } else {
-        window.products.push({ id: Date.now(), name, qty, priceCNY: cny, priceUZS: uzs, date: new Date().toLocaleString() });
+        window.products.push({
+            id: Date.now(),
+            name,
+            qty,
+            priceCNY: cny,
+            priceUZS: uzs,
+            date: new Date().toLocaleString()
+        });
     }
 
     clearStockForm();
     renderStock();
-    window.saveAll();
+
+    if (window.saveAll) {
+        window.saveAll();
+    } else {
+        console.warn("window.saveAll is not defined");
+    }
 }
 
 export function clearStockForm() {
