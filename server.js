@@ -98,36 +98,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// API для управления пользователями
-app.get('/api/users', async (req, res) => {
-    try {
-        const users = await UserModel.find({}, { password: 0 });
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ error: 'Ошибка загрузки пользователей' });
-    }
-});
-
-app.post('/api/users', async (req, res) => {
-    try {
-        const { username, password, role, name } = req.body;
-        const newUser = await UserModel.create({ username, password, role, name });
-        res.json({ success: true, user: { username: newUser.username, role: newUser.role, name: newUser.name } });
-    } catch (error) {
-        res.status(500).json({ error: 'Ошибка создания пользователя' });
-    }
-});
-
-app.delete('/api/users/:username', async (req, res) => {
-    try {
-        if (req.params.username === 'admin') return res.status(400).json({ error: 'Нельзя удалить главного админа' });
-        await UserModel.deleteOne({ username: req.params.username });
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: 'Ошибка удаления пользователя' });
-    }
-});
-
 // Загрузка данных
 app.get('/api/load', async (req, res) => {
     try {
@@ -160,12 +130,12 @@ app.post('/api/save', async (req, res) => {
     }
 });
 
-// === API ДЛЯ УПРАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯМИ ===
+// API для управления пользователями (Legacy & Updated Consolidated)
 
 // Получить всех пользователей
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await UserModel.find({}, '-password'); // Не отправляем пароли
+        const users = await UserModel.find({}, { password: 0 }); // Не отправляем пароли
         res.json({ success: true, users });
     } catch (error) {
         console.error('Ошибка получения пользователей:', error);

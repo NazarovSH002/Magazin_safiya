@@ -65,9 +65,14 @@ async function loadAll() {
 
         // Инициализация интерфейса после загрузки
         initRates(data.rates);
-        renderDashboard();
-        renderStock();
-        renderShopInventory();
+
+        // Обновляем текущую активную вкладку
+        const activeView = document.querySelector('.view.active');
+        if (activeView) {
+            const viewId = activeView.id.replace('view-', '');
+            switchTab(viewId);
+        }
+
     } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
         // Резервный вариант: localStorage, если сервер не запущен
@@ -77,9 +82,13 @@ async function loadAll() {
         debts = JSON.parse(localStorage.getItem('pro_debts')) || [];
         installments = JSON.parse(localStorage.getItem('pro_installments')) || [];
         initRates();
-        renderDashboard();
-        renderStock();
-        renderShopInventory();
+
+        // Обновляем текущую активную вкладку
+        const activeView = document.querySelector('.view.active');
+        if (activeView) {
+            const viewId = activeView.id.replace('view-', '');
+            switchTab(viewId);
+        }
     }
 }
 
@@ -191,75 +200,21 @@ function applyRoleLimits() {
     }
 }
 
-// --- УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ---
-async function loadUsers() {
-    if (!currentUser || currentUser.role !== 'admin') return;
-    try {
-        const response = await fetch(`${API_URL}/users`);
-        const users = await response.json();
-        renderUsers(users);
-    } catch (err) { console.error('Ошибка загрузки пользователей'); }
-}
-
-function renderUsers(users) {
-    const tbody = document.getElementById('users-tbody');
-    if (!tbody) return;
-    tbody.innerHTML = users.map(u => `
-        <tr>
-            <td>${u.name || '-'}</td>
-            <td>${u.username}</td>
-            <td><span class="badge" style="background:${u.role === 'admin' ? 'var(--primary)' : 'var(--success)'}">${u.role === 'admin' ? 'Админ' : 'Продавец'}</span></td>
-            <td>
-                ${u.username !== 'admin' ? `<button class="btn-icon-danger" onclick="deleteUser('${u.username}')">🗑️</button>` : ''}
-            </td>
-        </tr>
-    `).join('');
-}
-
-async function addUser() {
-    const username = document.getElementById('uUsername').value;
-    const password = document.getElementById('uPassword').value;
-    const name = document.getElementById('uName').value;
-    const role = document.getElementById('uRole').value;
-
-    if (!username || !password) return alert('Логин и пароль обязательны');
-
-    try {
-        const response = await fetch(`${API_URL}/users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, name, role })
-        });
-        const data = await response.json();
-        if (data.success) {
-            alert('Пользователь создан');
-            document.getElementById('uUsername').value = '';
-            document.getElementById('uPassword').value = '';
-            document.getElementById('uName').value = '';
-            loadUsers();
-        } else {
-            alert(data.error || 'Ошибка');
-        }
-    } catch (err) { alert('Ошибка сети'); }
-}
-
-async function deleteUser(username) {
-    if (!confirm(`Удалить пользователя ${username}?`)) return;
-    try {
-        const response = await fetch(`${API_URL}/users/${username}`, { method: 'DELETE' });
-        const data = await response.json();
-        if (data.success) loadUsers();
-        else alert(data.error);
-    } catch (err) { alert('Ошибка сети'); }
-}
-
 function logout() {
     localStorage.removeItem('pro_user');
     location.reload();
 }
 
 // --- НАВИГАЦИЯ ---
-function switchTab(viewId) {
+async function switchTab(viewId) {
+    console.log(`🚀 Переключение на: ${viewId}`);
+
+    // 1. Загружаем HTML шаблон
+    if (window.loadViewTemplate) {
+        await window.loadViewTemplate(viewId);
+    }
+
+    // 2. Логика переключения классов
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
 
@@ -269,41 +224,63 @@ function switchTab(viewId) {
     // Подсветка активной вкладки
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(t => {
-        if (t.getAttribute('onclick').includes(`'${viewId}'`)) t.classList.add('active');
+        const onclick = t.getAttribute('onclick');
+        if (onclick && onclick.includes(`'${viewId}'`)) {
+            t.classList.add('active');
+        }
     });
 
-    // Ленивая загрузка модулей
+    // 3. Инициализация модулей
     if (viewId === 'dashboard') {
-        loadModule('dashboard').then(m => m && m.renderDashboard && m.renderDashboard());
+        const m = await loadModule('dashboard');
+        if (m && m.renderDashboard) m.renderDashboard();
     }
 
     if (viewId === 'stock') {
-        loadModule('stock').then(m => m && m.renderStock && m.renderStock());
+        const m = await loadModule('stock');
+        if (m && m.renderStock) m.renderStock();
     }
 
     if (viewId === 'shop') {
-        loadModule('stock').then(m => m && m.renderShopInventory && m.renderShopInventory());
+        const m = await loadModule('stock');
+        if (m && m.renderShopInventory) m.renderShopInventory();
     }
 
     if (viewId === 'retail') {
-        renderRetailList();
-        if (document.getElementById('retailDate')) {
-            document.getElementById('retailDate').value = new Date().toISOString().split('T')[0];
-        }
-        renderDailySales();
-    }
-    if (viewId === 'wholesale') renderWholesaleList();
-    if (viewId === 'debts') renderDebts();
-    if (viewId === 'installments') renderInstallments();
-    if (viewId === 'history') renderHistory();
+        const m = await loadModule('trade');
+        if (m) {
+            if (m.renderRetailList) m.renderRetailList();
+            if (m.renderDailySales) m.renderDailySales();
 
-    // Ленивая загрузка модуля пользователей
-    if (viewId === 'users') {
-        loadModule('users').then(module => {
-            if (module && module.loadUsers) {
-                module.loadUsers();
+            if (document.getElementById('retailDate')) {
+                document.getElementById('retailDate').value = new Date().toISOString().split('T')[0];
             }
-        });
+        }
+    }
+
+    if (viewId === 'wholesale') {
+        const m = await loadModule('trade');
+        if (m && m.renderWholesaleList) m.renderWholesaleList();
+    }
+
+    if (viewId === 'debts') {
+        const m = await loadModule('history');
+        if (m && m.renderDebts) m.renderDebts();
+    }
+
+    if (viewId === 'installments') {
+        const m = await loadModule('history');
+        if (m && m.renderInstallments) m.renderInstallments();
+    }
+
+    if (viewId === 'history') {
+        const m = await loadModule('history');
+        if (m && m.renderHistory) m.renderHistory();
+    }
+
+    if (viewId === 'users') {
+        const m = await loadModule('users');
+        if (m && m.loadUsers) m.loadUsers();
     }
 }
 
@@ -337,3 +314,6 @@ window.format = format;
 window.fetchRates = fetchRates;
 window.loadModule = loadModule;
 window.saveAll = saveAll;
+window.switchTab = switchTab;
+window.handleLogin = handleLogin;
+window.logout = logout;
