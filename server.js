@@ -167,15 +167,24 @@ app.post('/api/save', async (req, res) => {
     }
 });
 
-// API для управления пользователями (Legacy & Updated Consolidated)
+// API для управления пользователями
 
 // Получить всех пользователей
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await UserModel.find({}, { password: 0 }); // Не отправляем пароли
-        res.json({ success: true, users });
+        if (isUsingMongoDB) {
+            const users = await UserModel.find({}, { password: 0 });
+            res.json({ success: true, users });
+        } else {
+            const users = readLocalData('users', [
+                { _id: '1', username: 'admin', password: 'admin', role: 'admin', name: 'Администратор' },
+                { _id: '2', username: 'seller', password: '1234', role: 'seller', name: 'Продавец' }
+            ]);
+            // Убираем пароли перед отправкой
+            const safeUsers = users.map(({ password, ...u }) => u);
+            res.json({ success: true, users: safeUsers });
+        }
     } catch (error) {
-        console.error('Ошибка получения пользователей:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
@@ -184,30 +193,23 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
     try {
         const { name, username, password, role } = req.body;
+        if (!username || !password) return res.status(400).json({ success: false, error: 'Логин и пароль обязательны' });
 
-        // Проверка обязательных полей
-        if (!username || !password) {
-            return res.status(400).json({ success: false, error: 'Логин и пароль обязательны' });
+        if (isUsingMongoDB) {
+            const existing = await UserModel.findOne({ username });
+            if (existing) return res.status(400).json({ success: false, error: 'Логин занят' });
+            const newUser = await UserModel.create({ name: name || username, username, password, role: role || 'seller' });
+            res.json({ success: true, user: { _id: newUser._id, name: newUser.name, username: newUser.username, role: newUser.role } });
+        } else {
+            const users = readLocalData('users');
+            if (users.find(u => u.username === username)) return res.status(400).json({ success: false, error: 'Логин занят' });
+            const newUser = { _id: Date.now().toString(), name: name || username, username, password, role: role || 'seller' };
+            users.push(newUser);
+            writeLocalData('users', users);
+            const { password: pw, ...safeUser } = newUser;
+            res.json({ success: true, user: safeUser });
         }
-
-        // Проверка существования пользователя
-        const existing = await UserModel.findOne({ username });
-        if (existing) {
-            return res.status(400).json({ success: false, error: 'Пользователь с таким логином уже существует' });
-        }
-
-        // Создание пользователя
-        const newUser = await UserModel.create({
-            name: name || username,
-            username,
-            password,
-            role: role || 'seller'
-        });
-
-        console.log(`👤 Создан новый пользователь: ${username} (${role || 'seller'})`);
-        res.json({ success: true, user: { _id: newUser._id, name: newUser.name, username: newUser.username, role: newUser.role } });
     } catch (error) {
-        console.error('Ошибка создания пользователя:', error);
         res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
@@ -218,21 +220,25 @@ app.put('/api/users/:id', async (req, res) => {
         const { id } = req.params;
         const { name, username, password, role } = req.body;
 
-        const updateData = { name, username, role };
-        if (password) {
-            updateData.password = password; // Обновляем пароль только если он передан
+        if (isUsingMongoDB) {
+            const updateData = { name, username, role };
+            if (password) updateData.password = password;
+            const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, { new: true });
+            if (!updatedUser) return res.status(404).json({ success: false, error: 'Не найден' });
+            res.json({ success: true, user: { _id: updatedUser._id, name: updatedUser.name, username: updatedUser.username, role: updatedUser.role } });
+        } else {
+            const users = readLocalData('users');
+            const idx = users.findIndex(u => u._id === id);
+            if (idx === -1) return res.status(404).json({ success: false, error: 'Не найден' });
+
+            users[idx] = { ...users[idx], name, username, role };
+            if (password) users[idx].password = password;
+
+            writeLocalData('users', users);
+            const { password: pw, ...safeUser } = users[idx];
+            res.json({ success: true, user: safeUser });
         }
-
-        const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, { new: true });
-
-        if (!updatedUser) {
-            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
-        }
-
-        console.log(`✏️ Обновлен пользователь: ${updatedUser.username}`);
-        res.json({ success: true, user: { _id: updatedUser._id, name: updatedUser.name, username: updatedUser.username, role: updatedUser.role } });
     } catch (error) {
-        console.error('Ошибка обновления пользователя:', error);
         res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
@@ -241,17 +247,17 @@ app.put('/api/users/:id', async (req, res) => {
 app.delete('/api/users/:id', async (req, res) => {
     try {
         const { id } = req.params;
-
-        const deletedUser = await UserModel.findByIdAndDelete(id);
-
-        if (!deletedUser) {
-            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        if (isUsingMongoDB) {
+            const deletedUser = await UserModel.findByIdAndDelete(id);
+            if (!deletedUser) return res.status(404).json({ success: false, error: 'Не найден' });
+        } else {
+            const users = readLocalData('users');
+            const newUsers = users.filter(u => u._id !== id);
+            if (users.length === newUsers.length) return res.status(404).json({ success: false, error: 'Не найден' });
+            writeLocalData('users', newUsers);
         }
-
-        console.log(`🗑️ Удален пользователь: ${deletedUser.username}`);
         res.json({ success: true });
     } catch (error) {
-        console.error('Ошибка удаления пользователя:', error);
         res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
