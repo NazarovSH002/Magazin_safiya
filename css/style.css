@@ -491,14 +491,16 @@ tr:hover td {
 
     .top-bar {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        text-align: center;
         gap: 15px;
     }
 
     .rates-group {
         width: 100%;
-        justify-content: space-between;
-        padding: 10px 15px;
+        justify-content: center;
+        padding: 10px;
+        flex-wrap: wrap;
     }
 
     .rate-item input {
@@ -507,20 +509,28 @@ tr:hover td {
 
     .tabs {
         width: 100%;
+        display: flex;
         overflow-x: auto;
-        white-space: nowrap;
-        display: block;
-        padding: 8px;
+        padding: 10px 5px;
+        margin-bottom: 20px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Hide scrollbar Firefox */
+    }
+
+    .tabs::-webkit-scrollbar {
+        display: none; /* Hide scrollbar Chrome/Safari */
     }
 
     .tab {
-        display: inline-block;
-        padding: 8px 15px;
-        margin-right: 5px;
+        flex: 0 0 auto;
+        padding: 10px 15px;
+        white-space: nowrap;
+        font-size: 13px;
     }
 
     .stat-card {
-        padding: 15px;
+        padding: 16px;
+        gap: 12px;
     }
 
     .stat-icon {
@@ -530,58 +540,74 @@ tr:hover td {
     }
 
     .stat-value {
-        font-size: 16px;
+        font-size: 17px;
     }
 
-    .view h3 {
-        font-size: 18px !important;
+    .grid-stock, .grid-trade {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
     }
 
-    .search-box input {
-        font-size: 14px;
-        height: 42px;
-    }
-
-    th, td {
-        padding: 10px 8px;
-        font-size: 13px;
-    }
-
-    /* Специфические настройки для мобильной розницы */
+    /* Мобильный вид для Розницы */
     #view-retail > div:first-child {
         grid-template-columns: 1fr !important;
     }
 
     #retail-list {
-        max-height: 300px;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        max-height: 350px !important;
+    }
+
+    /* Мобильный вид для Истории в Рознице */
+    #view-retail .card:last-child > div:last-child {
+        grid-template-columns: 1fr !important;
     }
     
-    #retail-cart {
-        max-height: 200px;
+    #retail-date-sidebar {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+        padding-right: 0 !important;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        display: flex !important;
+        overflow-x: auto;
+        gap: 10px;
+    }
+
+    #retail-date-sidebar div {
+        flex: 0 0 auto;
+        padding: 8px 15px;
+        background: var(--glass);
+        border-radius: 8px;
+    }
+
+    .table-container {
+        border-radius: 8px;
+    }
+
+    th, td {
+        padding: 12px 8px;
+        font-size: 13px;
     }
 
     .modal-content {
-        max-width: 90%;
-        margin: 20px;
-        padding: 20px;
+        max-width: 95%;
+        padding: 24px 16px;
     }
 }
 
 @media (max-width: 480px) {
-    .tabs {
-        padding: 5px;
+    .stat-label {
+        font-size: 12px;
     }
     
-    .tab {
-        padding: 8px 12px;
-        font-size: 13px;
+    h2 {
+        font-size: 22px !important;
     }
 
-    h2 {
-        font-size: 20px !important;
-    }
-    
-    .stat-card {
-        gap: 12px;
+    .btn {
+        padding: 10px 15px;
+        font-size: 13px;
     }
 }
