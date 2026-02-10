@@ -12,6 +12,8 @@ let currentUser = JSON.parse(localStorage.getItem('pro_user')) || null;
 // Система ленивой загрузки модулей
 const loadedModules = {};
 const moduleLoaders = {
+    dashboard: () => import('./modules/dashboard.js'),
+    stock: () => import('./modules/stock.js'),
     users: () => import('./modules/users.js')
 };
 
@@ -268,8 +270,19 @@ function switchTab(viewId) {
         if (t.getAttribute('onclick').includes(`'${viewId}'`)) t.classList.add('active');
     });
 
-    if (viewId === 'stock') renderStock();
-    if (viewId === 'shop') renderShopInventory();
+    // Ленивая загрузка модулей
+    if (viewId === 'dashboard') {
+        loadModule('dashboard').then(m => m && m.renderDashboard && m.renderDashboard());
+    }
+
+    if (viewId === 'stock') {
+        loadModule('stock').then(m => m && m.renderStock && m.renderStock());
+    }
+
+    if (viewId === 'shop') {
+        loadModule('stock').then(m => m && m.renderShopInventory && m.renderShopInventory());
+    }
+
     if (viewId === 'retail') {
         renderRetailList();
         if (document.getElementById('retailDate')) {
@@ -317,3 +330,6 @@ window.closeUserModal = function () {
 window.saveUser = function () {
     loadModule('users').then(m => m && m.saveUser && m.saveUser());
 };
+ 
+ w i n d o w . f o r m a t   =   f o r m a t ;   w i n d o w . f e t c h R a t e s   =   f e t c h R a t e s ;  
+ 
