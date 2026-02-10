@@ -473,12 +473,158 @@ tr:hover td {
     }
 }
 
+/* USER MANAGEMENT STYLES */
+.user-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.user-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.user-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.user-card:hover::before {
+    opacity: 1;
+}
+
+.user-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.user-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-username {
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.user-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.user-role-badge.admin {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.user-role-badge.seller {
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.user-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.user-card-actions button {
+    flex: 1;
+    padding: 10px;
+    font-size: 13px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.btn-edit-user {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.btn-edit-user:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateY(-1px);
+}
+
+.btn-delete-user {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-delete-user:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-1px);
+}
+
 /* RESPONSIVE DESIGN */
 @media (max-width: 1024px) {
-    .grid-stock, .grid-trade {
+
+    .grid-stock,
+    .grid-trade {
         grid-template-columns: 1fr;
     }
-    
+
     .container {
         padding: 0 15px;
     }
@@ -514,11 +660,13 @@ tr:hover td {
         padding: 10px 5px;
         margin-bottom: 20px;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Hide scrollbar Firefox */
+        scrollbar-width: none;
+        /* Hide scrollbar Firefox */
     }
 
     .tabs::-webkit-scrollbar {
-        display: none; /* Hide scrollbar Chrome/Safari */
+        display: none;
+        /* Hide scrollbar Chrome/Safari */
     }
 
     .tab {
@@ -543,13 +691,14 @@ tr:hover td {
         font-size: 17px;
     }
 
-    .grid-stock, .grid-trade {
+    .grid-stock,
+    .grid-trade {
         grid-template-columns: 1fr !important;
         gap: 16px;
     }
 
     /* Мобильный вид для Розницы */
-    #view-retail > div:first-child {
+    #view-retail>div:first-child {
         grid-template-columns: 1fr !important;
     }
 
@@ -560,10 +709,10 @@ tr:hover td {
     }
 
     /* Мобильный вид для Истории в Рознице */
-    #view-retail .card:last-child > div:last-child {
+    #view-retail .card:last-child>div:last-child {
         grid-template-columns: 1fr !important;
     }
-    
+
     #retail-date-sidebar {
         border-right: none !important;
         border-bottom: 1px solid var(--border);
@@ -586,7 +735,8 @@ tr:hover td {
         border-radius: 8px;
     }
 
-    th, td {
+    th,
+    td {
         padding: 12px 8px;
         font-size: 13px;
     }
@@ -601,7 +751,7 @@ tr:hover td {
     .stat-label {
         font-size: 12px;
     }
-    
+
     h2 {
         font-size: 22px !important;
     }

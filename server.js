@@ -160,6 +160,95 @@ app.post('/api/save', async (req, res) => {
     }
 });
 
+// === API ДЛЯ УПРАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯМИ ===
+
+// Получить всех пользователей
+app.get('/api/users', async (req, res) => {
+    try {
+        const users = await UserModel.find({}, '-password'); // Не отправляем пароли
+        res.json({ success: true, users });
+    } catch (error) {
+        console.error('Ошибка получения пользователей:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Создать нового пользователя
+app.post('/api/users', async (req, res) => {
+    try {
+        const { name, username, password, role } = req.body;
+
+        // Проверка обязательных полей
+        if (!username || !password) {
+            return res.status(400).json({ success: false, error: 'Логин и пароль обязательны' });
+        }
+
+        // Проверка существования пользователя
+        const existing = await UserModel.findOne({ username });
+        if (existing) {
+            return res.status(400).json({ success: false, error: 'Пользователь с таким логином уже существует' });
+        }
+
+        // Создание пользователя
+        const newUser = await UserModel.create({
+            name: name || username,
+            username,
+            password,
+            role: role || 'seller'
+        });
+
+        console.log(`👤 Создан новый пользователь: ${username} (${role || 'seller'})`);
+        res.json({ success: true, user: { _id: newUser._id, name: newUser.name, username: newUser.username, role: newUser.role } });
+    } catch (error) {
+        console.error('Ошибка создания пользователя:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Обновить пользователя
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, username, password, role } = req.body;
+
+        const updateData = { name, username, role };
+        if (password) {
+            updateData.password = password; // Обновляем пароль только если он передан
+        }
+
+        const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, { new: true });
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        }
+
+        console.log(`✏️ Обновлен пользователь: ${updatedUser.username}`);
+        res.json({ success: true, user: { _id: updatedUser._id, name: updatedUser.name, username: updatedUser.username, role: updatedUser.role } });
+    } catch (error) {
+        console.error('Ошибка обновления пользователя:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Удалить пользователя
+app.delete('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deletedUser = await UserModel.findByIdAndDelete(id);
+
+        if (!deletedUser) {
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        }
+
+        console.log(`🗑️ Удален пользователь: ${deletedUser.username}`);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Ошибка удаления пользователя:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Сервер запущен на порту: ${PORT}`);
 });

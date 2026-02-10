@@ -598,6 +598,63 @@
             </div>
         </div>
 
+        <!-- ВКЛАДКА: ПОЛЬЗОВАТЕЛИ -->
+        <div id="view-users" class="view">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+                <h2 style="margin: 0;">👥 Управление пользователями</h2>
+                <button class="btn btn-primary" onclick="openUserModal()">
+                    <span style="font-size: 18px;">+</span> Добавить пользователя
+                </button>
+            </div>
+
+            <div id="users-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                <!-- Карточки пользователей будут добавлены через JS -->
+            </div>
+        </div>
+
+        <!-- Модальное окно для добавления/редактирования пользователя -->
+        <div id="user-modal" class="modal">
+            <div class="modal-content card" style="max-width: 500px;">
+                <h3 id="user-modal-title" style="margin-bottom: 24px;">Новый пользователь</h3>
+                <input type="hidden" id="edit-user-id">
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block;">Имя</label>
+                    <input type="text" id="user-name" placeholder="Например: Иван Иванов" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block;">Логин</label>
+                    <input type="text" id="user-username" placeholder="Логин для входа" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block;">Пароль</label>
+                    <input type="password" id="user-password" placeholder="Пароль" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block;">Роль</label>
+                    <select id="user-role"
+                        style="width: 100%; padding: 12px; background: var(--glass); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px;">
+                        <option value="seller">Продавец</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;">
+                    <button class="btn btn-outline" onclick="closeUserModal()">Отмена</button>
+                    <button class="btn btn-primary" onclick="saveUser()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Модальное окно для выплаты долга/рассрочки -->
         <div id="payment-modal" class="modal">
             <div class="modal-content card">
