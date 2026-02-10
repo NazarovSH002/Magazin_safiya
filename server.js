@@ -75,6 +75,11 @@ app.use(express.static(__dirname));
 
 // API для авторизации
 app.post('/api/login', async (req, res) => {
+    // Проверка состояния базы данных
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ success: false, error: 'База данных еще подключается. Попробуйте через 10 секунд.' });
+    }
+
     const { username, password } = req.body;
     console.log(`Попытка входа: ${username}`);
 
@@ -89,7 +94,7 @@ app.post('/api/login', async (req, res) => {
         }
     } catch (error) {
         console.error('Ошибка логина:', error);
-        res.status(500).json({ error: 'Ошибка сервера' });
+        res.status(500).json({ error: 'Ошибка сервера при поиске пользователя' });
     }
 });
 

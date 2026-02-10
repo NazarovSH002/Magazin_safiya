@@ -35,8 +35,13 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1) translate(-10%, -10%); }
-            100% { transform: scale(1.2) translate(10%, 10%); }
+            0% {
+                transform: scale(1) translate(-10%, -10%);
+            }
+
+            100% {
+                transform: scale(1.2) translate(10%, 10%);
+            }
         }
 
         .login-card {
@@ -53,8 +58,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .login-card h1 {
@@ -144,16 +156,16 @@
         <div class="login-card">
             <h1>Shop Manager <span style="color:#3b82f6">Pro</span></h1>
             <p>Добро пожаловать в систему управления</p>
-            
+
             <div id="login-error"></div>
-            
+
             <div class="login-input-group">
                 <input type="text" id="login-username" placeholder="Логин">
             </div>
             <div class="login-input-group">
                 <input type="password" id="login-password" placeholder="Пароль">
             </div>
-            
+
             <button onclick="handleLogin()">Войти в кабинет</button>
             <div style="margin-top: 24px; color: #64748b; font-size: 12px;">
                 v1.0.4 &bull; © 2026 Professional Solutions
