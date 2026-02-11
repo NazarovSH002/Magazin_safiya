@@ -34,7 +34,36 @@ export function addOrUpdateProduct() {
         }
         window.editingId = null;
     } else {
-        createNewEntry();
+        // Проверяем, есть ли уже такой товар с ТАКОЙ ЖЕ ценой
+        const existing = window.products.find(p => p.name.toLowerCase() === name.toLowerCase() && p.priceUZS === uzs);
+
+        if (existing) {
+            // Если нашли совпадение по имени и цене - просто прибавляем кол-во
+            if (toShopEl && toShopEl.checked) {
+                // Если стоит галочка "сразу в магазин"
+                const shopItem = window.shopProducts.find(s => s.stockId === existing.id);
+                if (shopItem) {
+                    shopItem.qty += qty;
+                    shopItem.lastUpdate = pDate;
+                } else {
+                    window.shopProducts.push({
+                        id: Date.now(),
+                        stockId: existing.id,
+                        name: name,
+                        qty: qty,
+                        priceCNY: cny,
+                        priceUZS: uzs,
+                        lastUpdate: pDate
+                    });
+                }
+                // На складе оставляем без изменений (обычно там будет 0, если товар уже был перемещен)
+            } else {
+                existing.qty += qty;
+            }
+            window.logAction('add_product', `Объединен товар: ${name} (цена совпала)`, { id: existing.id, addedQty: qty });
+        } else {
+            createNewEntry();
+        }
     }
 
     function createNewEntry() {
@@ -97,15 +126,15 @@ export function renderStock() {
     window.products.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="checkbox" class="stock-check" value="${p.id}" onclick="window.StockModule.updateSelectedCount()"></td>
-            <td>
+            <td data-label="Выбор"><input type="checkbox" class="stock-check" value="${p.id}" onclick="window.StockModule.updateSelectedCount()"></td>
+            <td data-label="Товар на складе">
                 <div onclick="window.StockModule.editProduct(${p.id})" style="cursor:pointer; font-weight:500;">${p.name}</div>
                 <div style="font-size:10px; color:var(--text-muted);">${p.date || '-'}</div>
             </td>
-            <td>${p.qty}</td>
-            <td style="color:var(--text-muted)">${p.priceCNY} ¥</td>
-            <td style="font-weight:600">${window.format(p.priceUZS)}</td>
-            <td>
+            <td data-label="Кол-во">${p.qty}</td>
+            <td data-label="Закуп" style="color:var(--text-muted)">${p.priceCNY} ¥</td>
+            <td data-label="Цена в суммах" style="font-weight:600">${window.format(p.priceUZS)}</td>
+            <td data-label="Действие">
                 <div class="actions-cell">
                     <button class="btn btn-primary btn-sm" onclick="window.StockModule.transferToShop(${p.id})">В магазин</button>
                     <button class="btn-icon-danger" title="Удалить" onclick="window.StockModule.deleteProduct(${p.id})">×</button>
@@ -160,11 +189,11 @@ export function renderShopInventory() {
     window.shopProducts.filter(s => s.name.toLowerCase().includes(query)).forEach(s => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="font-weight:600">${s.name}</td>
-            <td style="font-weight:700; color:var(--success)">${s.qty} шт</td>
-            <td>${window.format(s.priceUZS)} сум</td>
-            <td style="font-size:12px; color:var(--text-muted)">${s.lastUpdate}</td>
-            <td>
+            <td data-label="Название" style="font-weight:600">${s.name}</td>
+            <td data-label="Количество" style="font-weight:700; color:var(--success)">${s.qty} шт</td>
+            <td data-label="Цена">${window.format(s.priceUZS)} сум</td>
+            <td data-label="Дата переноса" style="font-size:12px; color:var(--text-muted)">${s.lastUpdate}</td>
+            <td data-label="Действие">
                 <div class="actions-cell">
                     <button class="btn btn-danger btn-sm" onclick="window.StockModule.returnToStock(${s.id})">На склад</button>
                 </div>
