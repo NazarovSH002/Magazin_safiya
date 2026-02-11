@@ -113,8 +113,12 @@ export function clearStockForm() {
     document.getElementById('pDate').value = new Date().toISOString().split('T')[0];
     if (document.getElementById('pToShop')) document.getElementById('pToShop').checked = false;
     window.editingId = null;
+
     const btn = document.getElementById('saveStockBtn');
     if (btn) btn.innerText = 'Сохранить на складе';
+
+    const title = document.getElementById('stockFormTitle');
+    if (title) title.innerText = 'Новый товар';
 }
 
 export function renderStock() {
@@ -128,7 +132,7 @@ export function renderStock() {
         tr.innerHTML = `
             <td data-label="Выбор"><input type="checkbox" class="stock-check" value="${p.id}" onclick="window.StockModule.updateSelectedCount()"></td>
             <td data-label="Товар на складе">
-                <div onclick="window.StockModule.editProduct(${p.id})" style="cursor:pointer; font-weight:500;">${p.name}</div>
+                <div onclick="window.StockModule.fillAsTemplate(${p.id})" style="cursor:pointer; font-weight:500;" title="Использовать как шаблон">${p.name}</div>
                 <div style="font-size:10px; color:var(--text-muted);">${p.date || '-'}</div>
             </td>
             <td data-label="Кол-во">${p.qty}</td>
@@ -137,6 +141,7 @@ export function renderStock() {
             <td data-label="Действие">
                 <div class="actions-cell">
                     <button class="btn btn-primary btn-sm" onclick="window.StockModule.transferToShop(${p.id})">В магазин</button>
+                    <button class="btn-sm" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text);" onclick="window.StockModule.editProduct(${p.id})" title="Редактировать запись">✏️</button>
                     <button class="btn-icon-danger" title="Удалить" onclick="window.StockModule.deleteProduct(${p.id})">×</button>
                 </div>
             </td>
@@ -225,16 +230,34 @@ export function returnToStock(shopId) {
     window.logAction('return_to_stock', `Возврат "${s.name}" из магазина на склад`, { qty: qtyToReturn });
 }
 
+export function fillAsTemplate(id) {
+    const p = window.products.find(p => p.id === id);
+    if (!p) return;
+    document.getElementById('pName').value = p.name;
+    document.getElementById('pPriceCNY').value = p.priceCNY;
+    document.getElementById('pPriceUZS').value = p.priceUZS;
+    // Сбрасываем ID редактирования, чтобы это считалось новым добавлением
+    window.editingId = null;
+    const btn = document.getElementById('saveStockBtn');
+    if (btn) btn.innerText = 'Сохранить на складе';
+    const title = document.getElementById('stockFormTitle');
+    if (title) title.innerText = 'Новый товар (по шаблону)';
+}
+
 export function editProduct(id) {
     const p = window.products.find(p => p.id === id);
+    if (!p) return;
     document.getElementById('pName').value = p.name;
     document.getElementById('pQty').value = p.qty;
     document.getElementById('pPriceCNY').value = p.priceCNY;
     document.getElementById('pPriceUZS').value = p.priceUZS;
     document.getElementById('pDate').value = (p.date && p.date.includes('-')) ? p.date : new Date().toISOString().split('T')[0];
+
     window.editingId = id;
     const btn = document.getElementById('saveStockBtn');
     if (btn) btn.innerText = 'Обновить данные';
+    const title = document.getElementById('stockFormTitle');
+    if (title) title.innerText = 'Редактирование записи';
 }
 
 export function deleteProduct(id) {

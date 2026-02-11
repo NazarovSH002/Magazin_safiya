@@ -5,8 +5,11 @@
         <input type="file" id="importInput" style="display: none;" onchange="importCSV(event)">
     </div>
     <div class="grid-stock">
-        <div class="card">
-            <h3 style="margin-bottom: 20px; text-align: center;">Новый товар</h3>
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 id="stockFormTitle" style="font-size: 18px; font-weight: 700;">Новый товар</h3>
+                <button class="btn btn-sm btn-outline" onclick="clearStockForm()">+ Новый / Сброс</button>
+            </div>
             <div class="form-group">
                 <input type="text" id="pName" placeholder="Название товара">
             </div>
