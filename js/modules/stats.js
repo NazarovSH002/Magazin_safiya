@@ -276,7 +276,11 @@ export function renderProfitBreakdown() {
         const style = document.createElement('style');
         style.id = 'stats-extra-styles';
         style.textContent = `
-            .stats-group-content.active, .stats-day-content.active { display: flex !important; }
+            .stats-group-content.active, .stats-day-content.active { 
+                display: flex !important; 
+                flex-direction: column !important;
+                gap: 5px;
+            }
         `;
         document.head.appendChild(style);
     }
