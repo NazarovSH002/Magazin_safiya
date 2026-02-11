@@ -26,9 +26,6 @@ export function addOrUpdateProduct() {
 
     if (!window.products) window.products = [];
 
-    // Поиск товара с таким же именем (без учета регистра)
-    const existing = window.products.find(p => p.name.toLowerCase() === name.toLowerCase());
-
     if (window.editingId) {
         const idx = window.products.findIndex(p => p.id === window.editingId);
         if (idx !== -1) {
@@ -36,19 +33,6 @@ export function addOrUpdateProduct() {
             window.logAction('edit_product', `Изменен товар: ${name}`, { id: window.editingId, qty, uzs });
         }
         window.editingId = null;
-    } else if (existing) {
-        // Если товар существует, спрашиваем: обновить или создать новый
-        const mode = confirm(`Товар "${name}" уже есть в списке.\n\nНажмите "ОК", чтобы ОБНОВИТЬ существующий (добавить количество и установить новую цену).\nНажмите "Отмена", чтобы СОЗДАТЬ еще одну запись (новая партия с отдельной ценой).`);
-
-        if (mode) {
-            existing.qty += qty;
-            existing.priceCNY = cny;
-            existing.priceUZS = uzs;
-            existing.date = pDate;
-            window.logAction('edit_product', `Товар "${name}" обновлен (добавлена партия)`, { id: existing.id, addedQty: qty, newPrice: uzs });
-        } else {
-            createNewEntry();
-        }
     } else {
         createNewEntry();
     }
