@@ -145,6 +145,8 @@ function calculateFinancials() {
         periodEl.style.color = stats.period.profit >= 0 ? 'var(--success)' : '#ef4444';
     }
 
+    renderProfitBreakdown();
+
     // Сводка
     const expMonth = expenses.filter(ex => new Date(ex.date) >= startOfMonth).reduce((sum, e) => sum + e.amount, 0);
     document.getElementById('stats-summary-text').innerHTML = `
@@ -167,6 +169,119 @@ function updateStatCard(id, data) {
     }
     if (salesEl) salesEl.innerText = `Продаж: ${data.count}`;
 }
+
+export function renderProfitBreakdown() {
+    const container = document.getElementById('stats-profit-breakdown');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const rates = window.fetchRates();
+    const sales = window.sales || [];
+
+    // Группировка: Месяц -> День -> Товар
+    const data = {};
+
+    const statsStart = document.getElementById('statsStart')?.value;
+    const statsEnd = document.getElementById('statsEnd')?.value;
+
+    sales.forEach(s => {
+        let sDate;
+        if (s.timestamp) sDate = new Date(s.timestamp);
+        else {
+            const parts = s.date.split(',')[0].split('.');
+            if (parts.length === 3) sDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            else sDate = new Date(s.id);
+        }
+
+        // Применяем фильтр
+        if (statsStart && sDate < new Date(statsStart)) return;
+        if (statsEnd) {
+            const endLimit = new Date(statsEnd);
+            endLimit.setHours(23, 59, 59, 999);
+            if (sDate > endLimit) return;
+        }
+
+        const monthKey = sDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+        const dayKey = sDate.toLocaleDateString('ru-RU');
+
+        if (!data[monthKey]) data[monthKey] = { profit: 0, days: {} };
+        if (!data[monthKey].days[dayKey]) data[monthKey].days[dayKey] = { profit: 0, products: {} };
+
+        s.items.forEach(item => {
+            const costUZS = ((item.priceCNY || 0) / rates.cny) * rates.uzs;
+            const profit = (item.priceUZS - costUZS) * item.cartQty;
+
+            data[monthKey].profit += profit;
+            data[monthKey].days[dayKey].profit += profit;
+
+            if (!data[monthKey].days[dayKey].products[item.name]) {
+                data[monthKey].days[dayKey].products[item.name] = { qty: 0, profit: 0 };
+            }
+            data[monthKey].days[dayKey].products[item.name].qty += item.cartQty;
+            data[monthKey].days[dayKey].products[item.name].profit += profit;
+        });
+    });
+
+    // Отрисовка
+    Object.keys(data).sort((a, b) => {
+        const parseMonth = (str) => {
+            const parts = str.split(' ');
+            const months = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+            return new Date(parts[1], months.indexOf(parts[0].toLowerCase()));
+        };
+        return parseMonth(b) - parseMonth(a);
+    }).forEach(month => {
+        const monthInfo = data[month];
+
+        const monthDiv = document.createElement('div');
+        monthDiv.className = 'month-group';
+        monthDiv.innerHTML = `
+            <div class="stats-group-header" onclick="this.nextElementSibling.classList.toggle('active')" style="display:flex; justify-content:space-between; padding:12px; background:rgba(255,255,255,0.05); border-radius:8px; cursor:pointer; font-weight:700;">
+                <span>📅 ${month}</span>
+                <span style="color:var(--success)">${window.format(Math.round(monthInfo.profit))} сум</span>
+            </div>
+            <div class="stats-group-content" style="display:none; padding-left:15px; margin-top:5px; flex-direction:column; gap:8px;"></div>
+        `;
+
+        const daysContent = monthDiv.querySelector('.stats-group-content');
+
+        Object.keys(monthInfo.days).sort((a, b) => {
+            const dateA = new Date(a.split('.').reverse().join('-'));
+            const dateB = new Date(b.split('.').reverse().join('-'));
+            return dateB - dateA;
+        }).forEach(day => {
+            const dayInfo = monthInfo.days[day];
+            const dayDiv = document.createElement('div');
+            dayDiv.innerHTML = `
+                <div class="stats-day-header" onclick="this.nextElementSibling.classList.toggle('active')" style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:6px; cursor:pointer; font-size:14px;">
+                    <span>📍 ${day}</span>
+                    <span style="font-weight:600;">${window.format(Math.round(dayInfo.profit))} сум</span>
+                </div>
+                <div class="stats-day-content" style="display:none; padding:10px 15px; border-left:2px solid var(--accent); margin:5px 0 5px 10px;">
+                    ${Object.keys(dayInfo.products).map(pName => `
+                        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <span>${pName} <small style="color:var(--text-muted)">x${dayInfo.products[pName].qty}</small></span>
+                            <span style="color:var(--success)">+${window.format(Math.round(dayInfo.products[pName].profit))}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            daysContent.appendChild(dayDiv);
+        });
+
+        container.appendChild(monthDiv);
+    });
+
+    if (!document.getElementById('stats-extra-styles')) {
+        const style = document.createElement('style');
+        style.id = 'stats-extra-styles';
+        style.textContent = `
+            .stats-group-content.active, .stats-day-content.active { display: flex !important; }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
 
 export function addExpense() {
     const date = document.getElementById('expDate').value;
