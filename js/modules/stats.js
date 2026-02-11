@@ -55,25 +55,27 @@ function calculateFinancials() {
         return saleProfit;
     };
 
+    const statsStart = document.getElementById('statsStart')?.value;
+    const statsEnd = document.getElementById('statsEnd')?.value;
+
     const stats = {
         day: { profit: 0, count: 0 },
         week: { profit: 0, count: 0 },
         month: { profit: 0, count: 0 },
-        total: { profit: 0, count: 0 }
+        total: { profit: 0, count: 0 },
+        period: { profit: 0, count: 0 }
     };
 
     sales.forEach(s => {
-        // Определяем дату продажи: либо по новому полю timestamp, либо пытаемся распарсить строку date
         let sDate;
         if (s.timestamp) {
             sDate = new Date(s.timestamp);
         } else {
-            // Фолбек для старых данных: пытаемся распарсить "DD.MM.YYYY, HH:MM:SS"
             const parts = s.date.split(',')[0].split('.');
             if (parts.length === 3) {
                 sDate = new Date(parts[2], parts[1] - 1, parts[0]);
             } else {
-                sDate = new Date(s.id); // Крайний случай
+                sDate = new Date(s.id);
             }
         }
         const p = getProfit(s);
@@ -93,11 +95,23 @@ function calculateFinancials() {
             stats.month.profit += p;
             stats.month.count++;
         }
+
+        // Расчет за период
+        let inPeriod = true;
+        if (statsStart && sDate < new Date(statsStart)) inPeriod = false;
+        if (statsEnd) {
+            const endLimit = new Date(statsEnd);
+            endLimit.setHours(23, 59, 59, 999);
+            if (sDate > endLimit) inPeriod = false;
+        }
+        if (inPeriod) {
+            stats.period.profit += p;
+            stats.period.count++;
+        }
     });
 
     // Вычитаем расходы
     expenses.forEach(ex => {
-        // Парсим YYYY-MM-DD корректно для локальной даты
         const exParts = ex.date.split('-');
         const exDate = new Date(exParts[0], exParts[1] - 1, exParts[2]);
         stats.total.profit -= ex.amount;
@@ -105,6 +119,18 @@ function calculateFinancials() {
         if (exDate >= startOfDay) stats.day.profit -= ex.amount;
         if (exDate >= startOfWeek) stats.week.profit -= ex.amount;
         if (exDate >= startOfMonth) stats.month.profit -= ex.amount;
+
+        // Расходы за период
+        let inPeriod = true;
+        if (statsStart && exDate < new Date(statsStart)) inPeriod = false;
+        if (statsEnd) {
+            const endLimit = new Date(statsEnd);
+            endLimit.setHours(23, 59, 59, 999);
+            if (exDate > endLimit) inPeriod = false;
+        }
+        if (inPeriod) {
+            stats.period.profit -= ex.amount;
+        }
     });
 
     // Обновляем UI
@@ -112,6 +138,12 @@ function calculateFinancials() {
     updateStatCard('week', stats.week);
     updateStatCard('month', stats.month);
     updateStatCard('total', stats.total);
+
+    const periodEl = document.getElementById('stats-period-profit');
+    if (periodEl) {
+        periodEl.innerText = window.format(Math.round(stats.period.profit)) + " сум";
+        periodEl.style.color = stats.period.profit >= 0 ? 'var(--success)' : '#ef4444';
+    }
 
     // Сводка
     const expMonth = expenses.filter(ex => new Date(ex.date) >= startOfMonth).reduce((sum, e) => sum + e.amount, 0);

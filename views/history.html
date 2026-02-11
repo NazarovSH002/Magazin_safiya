@@ -1,22 +1,56 @@
 <div id="view-history" class="view">
+    <div class="card" style="margin-bottom: 20px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 12px; color: var(--text-muted);">От</label>
+                <input type="date" id="historyStart" onchange="window.HistoryModule.renderHistory()">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 12px; color: var(--text-muted);">До</label>
+                <input type="date" id="historyEnd" onchange="window.HistoryModule.renderHistory()">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 12px; color: var(--text-muted);">Режим</label>
+                <select id="historyMode" onchange="window.HistoryModule.renderHistory()"
+                    style="background: var(--bg-input); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px;">
+                    <option value="sales">💰 Продажи</option>
+                    <option value="actions">📜 Все действия (Логи)</option>
+                </select>
+            </div>
+            <div id="actionFilterContainer" class="form-group" style="margin-bottom: 0; display: none;">
+                <label style="font-size: 12px; color: var(--text-muted);">Операция</label>
+                <select id="actionTypeFilter" onchange="window.HistoryModule.renderHistory()"
+                    style="background: var(--bg-input); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px;">
+                    <option value="all">Все</option>
+                    <option value="add_product">Добавление</option>
+                    <option value="edit_product">Изменение</option>
+                    <option value="delete_product">Удаление</option>
+                    <option value="transfer_to_shop">В магазин</option>
+                    <option value="login">Входы</option>
+                </select>
+            </div>
+            <button class="btn btn-outline" onclick="exportHistoryCSV()" style="margin-left: auto;">Excel (CSV)</button>
+        </div>
+    </div>
+
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3>История продаж</h3>
-            <div>
-                <button class="btn btn-outline" onclick="exportHistoryCSV()">Excel (CSV)</button>
-            </div>
+            <h3 id="historyTitle">История продаж</h3>
         </div>
-        <table style="margin-top: 10px;">
-            <thead>
-                <tr>
-                    <th style="width: 150px;">Дата/Время</th>
-                    <th>Клиент</th>
-                    <th>Сумма</th>
-                    <th>Тип</th>
-                    <th style="width: 100px;"></th>
-                </tr>
-            </thead>
-            <tbody id="history-tbody"></tbody>
-        </table>
+        <div class="table-container">
+            <table style="margin-top: 10px;">
+                <thead id="history-thead">
+                    <tr>
+                        <th style="width: 150px;">Дата/Время</th>
+                        <th>Клиент</th>
+                        <th>Состав заказа / Описание</th>
+                        <th>Сумма / Детали</th>
+                        <th>Тип</th>
+                        <th style="width: 80px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody"></tbody>
+            </table>
+        </div>
     </div>
 </div>

@@ -5,6 +5,7 @@ window.sales = [];
 window.debts = [];
 window.installments = [];
 window.expenses = [];
+window.actions = [];
 window.retailCart = [];
 window.wholesaleCart = [];
 window.editingId = null;
@@ -65,6 +66,7 @@ async function loadAll() {
         window.debts = data.debts || [];
         window.installments = data.installments || [];
         window.expenses = data.expenses || [];
+        window.actions = data.actions || [];
 
         // Инициализация интерфейса после загрузки
         initRates(data.rates);
@@ -85,6 +87,7 @@ async function loadAll() {
         window.debts = JSON.parse(localStorage.getItem('pro_debts')) || [];
         window.installments = JSON.parse(localStorage.getItem('pro_installments')) || [];
         window.expenses = JSON.parse(localStorage.getItem('pro_expenses')) || [];
+        window.actions = JSON.parse(localStorage.getItem('pro_actions')) || [];
         initRates();
 
         // Обновляем текущую активную вкладку
@@ -120,6 +123,7 @@ async function saveAll() {
     localStorage.setItem('pro_debts', JSON.stringify(window.debts));
     localStorage.setItem('pro_installments', JSON.stringify(window.installments));
     localStorage.setItem('pro_expenses', JSON.stringify(window.expenses));
+    localStorage.setItem('pro_actions', JSON.stringify(window.actions));
 
     // 2. Сохраняем в файлы через сервер
     const allData = {
@@ -129,6 +133,7 @@ async function saveAll() {
         debts: window.debts,
         installments: window.installments,
         expenses: window.expenses,
+        actions: window.actions,
         rates: {
             cny: parseFloat(document.getElementById('rateCNY').value) || 1,
             uzs: parseFloat(document.getElementById('rateUZS').value) || 0
@@ -170,6 +175,7 @@ async function handleLogin() {
         if (data.success) {
             window.currentUser = data.user;
             localStorage.setItem('pro_user', JSON.stringify(window.currentUser));
+            logAction('login', `Пользователь ${data.user.name} вошел в систему`);
             showApp();
             loadAll();
         } else {
@@ -321,6 +327,20 @@ window.saveUser = function () {
     loadModule('users').then(m => m && m.saveUser && m.saveUser());
 };
 
+function logAction(type, description, details = {}) {
+    if (!window.actions) window.actions = [];
+    window.actions.push({
+        id: Date.now(),
+        date: new Date().toISOString(),
+        user: window.currentUser ? window.currentUser.name : 'Unknown',
+        type, // e.g., 'add_product', 'sale', 'delete', 'login'
+        description,
+        details
+    });
+    window.saveAll();
+}
+
+window.logAction = logAction;
 window.format = format;
 window.fetchRates = fetchRates;
 window.loadModule = loadModule;

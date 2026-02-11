@@ -132,6 +132,7 @@ app.get('/api/load', async (req, res) => {
                 debts: data.debts || [],
                 installments: data.installments || [],
                 expenses: data.expenses || [],
+                actions: data.actions || [],
                 rates: data.rates || { cny: 7.2, uzs: 12850 }
             });
         } else {
@@ -142,6 +143,7 @@ app.get('/api/load', async (req, res) => {
                 debts: readLocalData('debts'),
                 installments: readLocalData('installments'),
                 expenses: readLocalData('expenses'),
+                actions: readLocalData('actions'),
                 rates: readLocalData('rates', { cny: 7.2, uzs: 12850 })
             });
         }

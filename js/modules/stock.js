@@ -11,6 +11,8 @@ export function addOrUpdateProduct() {
     const qtyEl = document.getElementById('pQty');
     const cnyEl = document.getElementById('pPriceCNY');
     const uzsEl = document.getElementById('pPriceUZS');
+    const dateEl = document.getElementById('pDate');
+    const toShopEl = document.getElementById('pToShop');
 
     if (!nameEl) return console.error("Element pName not found");
 
@@ -18,6 +20,7 @@ export function addOrUpdateProduct() {
     const qty = parseInt(qtyEl.value) || 0;
     const cny = parseFloat(cnyEl.value) || 0;
     const uzs = parseInt(uzsEl.value) || 0;
+    const pDate = dateEl.value || new Date().toISOString().split('T')[0];
 
     if (!name) return alert("Введите название товара");
 
@@ -26,18 +29,38 @@ export function addOrUpdateProduct() {
     if (window.editingId) {
         const idx = window.products.findIndex(p => p.id === window.editingId);
         if (idx !== -1) {
-            window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, priceUZS: uzs, date: new Date().toLocaleString() };
+            window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, priceUZS: uzs, date: pDate };
+            window.logAction('edit_product', `Изменен товар: ${name}`, { id: window.editingId, qty, uzs });
         }
         window.editingId = null;
     } else {
-        window.products.push({
-            id: Date.now(),
+        const newId = Date.now();
+        const newProduct = {
+            id: newId,
             name,
             qty,
             priceCNY: cny,
             priceUZS: uzs,
-            date: new Date().toLocaleString()
-        });
+            date: pDate
+        };
+        window.products.push(newProduct);
+        window.logAction('add_product', `Добавлен товар на склад: ${name}`, { id: newId, qty, uzs, date: pDate });
+
+        if (toShopEl && toShopEl.checked) {
+            // Сразу переносим в магазин
+            const shopId = Date.now() + 1;
+            window.shopProducts.push({
+                id: shopId,
+                stockId: newId,
+                name: name,
+                qty: qty,
+                priceCNY: cny,
+                priceUZS: uzs,
+                lastUpdate: pDate
+            });
+            newProduct.qty = 0; // На складе 0, всё в магазине
+            window.logAction('transfer_to_shop', `Товар ${name} сразу добавлен в магазин`, { id: shopId, qty });
+        }
     }
 
     clearStockForm();
@@ -55,6 +78,8 @@ export function clearStockForm() {
     document.getElementById('pQty').value = '';
     document.getElementById('pPriceCNY').value = '0.0';
     document.getElementById('pPriceUZS').value = '0';
+    document.getElementById('pDate').value = new Date().toISOString().split('T')[0];
+    if (document.getElementById('pToShop')) document.getElementById('pToShop').checked = false;
     window.editingId = null;
 }
 
@@ -117,6 +142,7 @@ export function transferToShop(id) {
 
     renderStock();
     window.saveAll();
+    window.logAction('transfer_to_shop', `Перенос "${p.name}" в магазин`, { qty: qtyToMove });
     alert("Передано в магазин!");
 }
 
@@ -162,6 +188,7 @@ export function returnToStock(shopId) {
 
     renderShopInventory();
     window.saveAll();
+    window.logAction('return_to_stock', `Возврат "${s.name}" из магазина на склад`, { qty: qtyToReturn });
 }
 
 export function editProduct(id) {
@@ -170,11 +197,14 @@ export function editProduct(id) {
     document.getElementById('pQty').value = p.qty;
     document.getElementById('pPriceCNY').value = p.priceCNY;
     document.getElementById('pPriceUZS').value = p.priceUZS;
+    document.getElementById('pDate').value = (p.date && p.date.includes('-')) ? p.date : new Date().toISOString().split('T')[0];
     window.editingId = id;
 }
 
 export function deleteProduct(id) {
     if (confirm("Удалить товар со склада?")) {
+        const p = window.products.find(p => p.id === id);
+        if (p) window.logAction('delete_product', `Товар ${p.name} удален со склада`);
         window.products = window.products.filter(p => p.id !== id);
         renderStock();
         window.saveAll();

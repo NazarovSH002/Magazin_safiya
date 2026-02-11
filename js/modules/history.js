@@ -189,57 +189,116 @@ export function renderInstallments() {
 }
 
 export function renderHistory() {
-    const sales = window.sales || [];
+    const mode = document.getElementById('historyMode')?.value || 'sales';
+    const start = document.getElementById('historyStart')?.value;
+    const end = document.getElementById('historyEnd')?.value;
+    const actionFilter = document.getElementById('actionTypeFilter')?.value || 'all';
+
     const tbody = document.getElementById('history-tbody');
+    const titleEl = document.getElementById('historyTitle');
+    const actionFilterContainer = document.getElementById('actionFilterContainer');
+
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    sales.forEach(s => {
-        const hasDetails = Array.isArray(s.items);
-        const tr = document.createElement('tr');
-        tr.style.cursor = hasDetails ? 'pointer' : 'default';
-        tr.onclick = (e) => {
-            if (e.target.tagName !== 'BUTTON') toggleDetails(s.id);
-        };
+    if (mode === 'actions') {
+        if (titleEl) titleEl.innerText = '📜 История действий (Логи)';
+        if (actionFilterContainer) actionFilterContainer.style.display = 'block';
 
-        tr.innerHTML = `
-            <td style="font-size:12px;">${s.date}</td>
-            <td style="font-weight:600;">${s.customer}</td>
-            <td style="font-weight:700; color:var(--success);">${format(s.total)}</td>
-            <td><span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); border: 1px solid var(--border);">${s.type}</span></td>
-            <td>
-                <div class="actions-cell" style="justify-content: flex-end;">
-                    <button class="btn btn-primary btn-sm" onclick="HistoryModule.printReceipt(${s.id})" title="Печать чека">🖨️</button>
-                    <button class="btn-icon-danger" onclick="HistoryModule.deleteHistory(${s.id})" title="Удалить">×</button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(tr);
+        let actions = window.actions || [];
 
-        // Строка с деталями (скрытая)
-        if (hasDetails) {
-            const detailTr = document.createElement('tr');
-            detailTr.id = `details-${s.id}`;
-            detailTr.className = 'details-row';
-            let itemsHtml = s.items.map(item => `
-                <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #333;">
-                    <span>${item.name} x ${item.cartQty}</span>
-                    <span>${format(item.priceUZS * item.cartQty)} сум</span>
-                </div>
-            `).join('');
+        // Фильтр по датам
+        if (start) actions = actions.filter(a => a.date.split('T')[0] >= start);
+        if (end) actions = actions.filter(a => a.date.split('T')[0] <= end);
 
-            detailTr.innerHTML = `
-                <td colspan="5" style="padding:15px; background:rgba(255,255,255,0.03);">
-                    <div style="max-width:400px;">
-                        <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">СОСТАВ ЗАКАЗА:</p>
-                        ${itemsHtml}
-                        ${s.comment ? `<p style="margin-top:15px; font-size:12px; color:var(--accent);">💬 Комментарий: ${s.comment}</p>` : ''}
+        // Фильтр по типу
+        if (actionFilter !== 'all') actions = actions.filter(a => a.type === actionFilter);
+
+        actions.slice().reverse().forEach(a => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-size:12px;">${new Date(a.date).toLocaleString()}</td>
+                <td><span class="badge" style="background:rgba(255,255,255,0.05); color:var(--accent); font-size:10px;">${a.user || 'Система'}</span></td>
+                <td style="font-size:13px;">${a.description}</td>
+                <td style="font-size:11px; color:var(--text-muted);">${JSON.stringify(a.details || {})}</td>
+                <td><span class="badge" style="background:rgba(255,255,255,0.1); font-size:10px;">${a.type}</span></td>
+                <td></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } else {
+        if (titleEl) titleEl.innerText = '💰 История продаж';
+        if (actionFilterContainer) actionFilterContainer.style.display = 'none';
+
+        let sales = window.sales || [];
+
+        // Фильтр по датам
+        // sales.timestamp или s.date? s.date имеет формат "10.02.2026, 17:54:26"
+        // Лучше использовать timestamp если он есть.
+        if (start) {
+            const startTime = new Date(start).getTime();
+            sales = sales.filter(s => s.timestamp ? s.timestamp >= startTime : true);
+        }
+        if (end) {
+            const endTime = new Date(end).setHours(23, 59, 59, 999);
+            sales = sales.filter(s => s.timestamp ? s.timestamp <= endTime : true);
+        }
+
+        sales.forEach(s => {
+            const hasDetails = Array.isArray(s.items);
+            const tr = document.createElement('tr');
+            tr.style.cursor = hasDetails ? 'pointer' : 'default';
+            tr.onclick = (e) => {
+                if (e.target.tagName !== 'BUTTON') toggleDetails(s.id);
+            };
+
+            let itemsSummary = "";
+            if (hasDetails) {
+                itemsSummary = s.items.map(item => `<div style="font-size:12px;">${item.name} <span style="color:var(--accent)">x ${item.cartQty}</span></div>`).join('');
+            } else {
+                itemsSummary = `<div style="font-size:12px;">${s.items}</div>`;
+            }
+
+            tr.innerHTML = `
+                <td style="font-size:12px;">${s.date}</td>
+                <td style="font-weight:600;">${s.customer}</td>
+                <td>${itemsSummary}</td>
+                <td style="font-weight:700; color:var(--success);">${format(s.total)} сум</td>
+                <td><span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); border: 1px solid var(--border); font-size:10px;">${s.type}</span></td>
+                <td>
+                    <div class="actions-cell" style="justify-content: flex-end;">
+                        <button class="btn btn-primary btn-sm" onclick="HistoryModule.printReceipt(${s.id})" title="Печать чека">🖨️</button>
+                        <button class="btn-icon-danger" onclick="HistoryModule.deleteHistory(${s.id})" title="Удалить">×</button>
                     </div>
                 </td>
             `;
-            tbody.appendChild(detailTr);
-        }
-    });
+            tbody.appendChild(tr);
+
+            // Строка с деталями (скрытая)
+            if (hasDetails) {
+                const detailTr = document.createElement('tr');
+                detailTr.id = `details-${s.id}`;
+                detailTr.className = 'details-row';
+                let itemsHtml = s.items.map(item => `
+                    <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #333; font-size:13px;">
+                        <span>${item.name} x ${item.cartQty}</span>
+                        <span>${format(item.priceUZS)} x ${item.cartQty} = ${format(item.priceUZS * item.cartQty)} сум</span>
+                    </div>
+                `).join('');
+
+                detailTr.innerHTML = `
+                    <td colspan="6" style="padding:15px; background:rgba(255,255,255,0.03);">
+                        <div style="max-width:500px;">
+                            <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px; font-weight:700;">ПОДРОБНЫЙ СОСТАВ:</p>
+                            ${itemsHtml}
+                            ${s.comment ? `<p style="margin-top:15px; font-size:12px; color:var(--accent);">💬 Комментарий: ${s.comment}</p>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(detailTr);
+            }
+        });
+    }
 }
 
 export function toggleDetails(id) {

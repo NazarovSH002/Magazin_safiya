@@ -45,6 +45,9 @@ export function renderWholesaleList() {
         `;
         list.appendChild(div);
     });
+    if (document.getElementById('wholesaleDate') && !document.getElementById('wholesaleDate').value) {
+        document.getElementById('wholesaleDate').value = new Date().toISOString().split('T')[0];
+    }
 }
 
 // Внутренние переменные модуля для корзины
@@ -131,8 +134,8 @@ export async function completeSale(type, isDebt, debtType = 'debt') {
     const total = cart.reduce((sum, i) => sum + ((parseInt(i.priceUZS) || 0) * i.cartQty), 0);
 
     let saleDate = new Date();
-    const dateInput = document.getElementById('retailDate');
-    if (type === 'retail' && dateInput && dateInput.value) {
+    const dateInput = document.getElementById(type === 'retail' ? 'retailDate' : 'wholesaleDate');
+    if (dateInput && dateInput.value) {
         saleDate = new Date(dateInput.value);
     }
 
@@ -179,9 +182,8 @@ export async function completeSale(type, isDebt, debtType = 'debt') {
 
     renderCart(type);
 
-    // Глобальное сохранение
     if (window.saveAll) await window.saveAll();
-
+    window.logAction('sale', `Продажа (${saleData.type}): ${customer} на сумму ${window.format(total)}`, { id: saleData.id, total, type: saleData.type });
     if (type === 'retail') renderDailySales();
     alert("Продано!");
 }
