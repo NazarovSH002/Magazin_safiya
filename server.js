@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -168,6 +169,38 @@ app.post('/api/save', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сохранения' });
+    }
+});
+
+// МОДУЛЬ МИГРАЦИИ (Вызвать один раз: /api/migrate)
+app.get('/api/migrate', async (req, res) => {
+    if (!isUsingMongoDB) {
+        return res.status(400).json({ error: 'Сначала подключите MongoDB через .env' });
+    }
+
+    try {
+        const keys = ['products', 'shop', 'sales', 'debts', 'installments', 'expenses', 'actions', 'rates', 'users'];
+        let results = [];
+
+        for (const key of keys) {
+            const localData = readLocalData(key);
+            if (key === 'users') {
+                // Миграция пользователей
+                for (const u of localData) {
+                    await UserModel.updateOne({ username: u.username }, u, { upsert: true });
+                }
+                results.push(`Пользователи: ${localData.length}`);
+            } else {
+                // Миграция обычных данных
+                if (localData && (Array.isArray(localData) ? localData.length > 0 : Object.keys(localData).length > 0)) {
+                    await DataModel.updateOne({ key }, { key, value: localData }, { upsert: true });
+                    results.push(`${key}: ${Array.isArray(localData) ? localData.length : 'объект'}`);
+                }
+            }
+        }
+        res.json({ success: true, migrated: results });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

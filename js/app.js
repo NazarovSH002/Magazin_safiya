@@ -54,6 +54,8 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 window.API_URL = API_URL;
 // currentUser уже в window
 
+window.isDataInitialized = false;
+
 // Загрузка данных с сервера
 async function loadAll() {
     try {
@@ -67,6 +69,8 @@ async function loadAll() {
         window.installments = data.installments || [];
         window.expenses = data.expenses || [];
         window.actions = data.actions || [];
+
+        window.isDataInitialized = true; // Отметка, что данные загружены
 
         // Инициализация интерфейса после загрузки
         initRates(data.rates);
@@ -116,6 +120,12 @@ function saveRates() {
 }
 
 async function saveAll() {
+    // ЗАЩИТА: Не сохраняем, если данные еще не были загружены или инициализированы
+    if (!window.isDataInitialized) {
+        console.warn('⚠️ Попытка сохранения до инициализации данных заблокирована.');
+        return;
+    }
+
     // 1. Сохраняем в localStorage (для подстраховки)
     localStorage.setItem('pro_products', JSON.stringify(window.products));
     localStorage.setItem('pro_shop', JSON.stringify(window.shopProducts));
@@ -175,9 +185,9 @@ async function handleLogin() {
         if (data.success) {
             window.currentUser = data.user;
             localStorage.setItem('pro_user', JSON.stringify(window.currentUser));
-            logAction('login', `Пользователь ${data.user.name} вошел в систему`);
             showApp();
-            loadAll();
+            await loadAll(); // Сначала загружаем данные
+            logAction('login', `Пользователь ${data.user.name} вошел в систему`); // Потом пишем лог
         } else {
             errorEl.innerText = data.error;
             errorEl.style.display = 'block';
