@@ -375,6 +375,19 @@ window.restoreBackup = async function (input) {
     reader.readAsText(file);
 };
 
+function logAction(type, description, details = {}) {
+    if (!window.actions) window.actions = [];
+    window.actions.push({
+        id: Date.now(),
+        date: new Date().toISOString(),
+        user: window.currentUser ? window.currentUser.name : 'Unknown',
+        type,
+        description,
+        details
+    });
+    window.saveAll();
+}
+
 window.logAction = logAction;
 window.format = format;
 window.fetchRates = fetchRates;
