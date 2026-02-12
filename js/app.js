@@ -337,18 +337,43 @@ window.saveUser = function () {
     loadModule('users').then(m => m && m.saveUser && m.saveUser());
 };
 
-function logAction(type, description, details = {}) {
-    if (!window.actions) window.actions = [];
-    window.actions.push({
-        id: Date.now(),
-        date: new Date().toISOString(),
-        user: window.currentUser ? window.currentUser.name : 'Unknown',
-        type, // e.g., 'add_product', 'sale', 'delete', 'login'
-        description,
-        details
-    });
-    window.saveAll();
-}
+window.downloadBackup = function () {
+    window.location.href = `${API_URL}/backup`;
+};
+
+window.restoreBackup = async function (input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    if (!confirm('ВНИМАНИЕ! Это полностью заменит все текущие данные данными из файла. Продолжить?')) {
+        input.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        try {
+            const backupData = JSON.parse(e.target.result);
+
+            const response = await fetch(`${API_URL}/restore`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(backupData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Данные успешно восстановлены! Страница будет перезагружена.');
+                location.reload();
+            } else {
+                alert('Ошибка: ' + result.error);
+            }
+        } catch (err) {
+            alert('Ошибка при чтении файла. Убедитесь, что это правильный файл бэкапа.');
+        }
+    };
+    reader.readAsText(file);
+};
 
 window.logAction = logAction;
 window.format = format;

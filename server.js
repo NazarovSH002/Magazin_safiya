@@ -204,6 +204,60 @@ app.get('/api/migrate', async (req, res) => {
     }
 });
 
+// --- СИСТЕМА БЭКАПА И ВОССТАНОВЛЕНИЯ ---
+
+// Экспорт всех данных в один JSON файл
+app.get('/api/backup', async (req, res) => {
+    try {
+        const allDocs = await DataModel.find({});
+        const allUsers = await UserModel.find({});
+
+        const backupData = {
+            timestamp: new Date().toISOString(),
+            version: "1.0",
+            data: {},
+            users: allUsers
+        };
+
+        allDocs.forEach(doc => {
+            backupData.data[doc.key] = doc.value;
+        });
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', 'attachment; filename=shop_backup_' + new Date().toISOString().split('T')[0] + '.json');
+        res.send(JSON.stringify(backupData, null, 2));
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка создания бэкапа' });
+    }
+});
+
+// Импорт данных из файла (полная перезапись базы)
+app.post('/api/restore', async (req, res) => {
+    try {
+        const { data, users } = req.body;
+        if (!data) return res.status(400).json({ error: 'Неверный формат файла' });
+
+        // 1. Восстанавливаем документы в DataModel
+        const operations = Object.entries(data).map(([key, value]) => ({
+            updateOne: { filter: { key }, update: { key, value }, upsert: true }
+        }));
+        if (operations.length > 0) await DataModel.bulkWrite(operations);
+
+        // 2. Восстанавливаем пользователей (если они есть в бэкапе)
+        if (users && Array.isArray(users)) {
+            for (const u of users) {
+                // Убираем _id, чтобы MongoDB создала новые или обновила по username
+                const { _id, ...userData } = u;
+                await UserModel.updateOne({ username: u.username }, userData, { upsert: true });
+            }
+        }
+
+        res.json({ success: true, message: "Данные успешно восстановлены" });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка восстановления: ' + error.message });
+    }
+});
+
 // API для управления пользователями
 
 // Получить всех пользователей
