@@ -17,9 +17,11 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 let isUsingMongoDB = false;
+let mongoDBWasConfigured = false; // 🛡️ Флаг: была ли настроена MongoDB
 
 // Подключение к MongoDB
 if (MONGODB_URI) {
+    mongoDBWasConfigured = true; // 🛡️ MongoDB настроена в .env
     console.log('📡 Попытка подключения к MongoDB...');
     mongoose.connect(MONGODB_URI)
         .then(() => {
@@ -30,6 +32,8 @@ if (MONGODB_URI) {
         .catch(err => {
             console.error('❌ Ошибка подключения к MongoDB, использую локальные файлы:');
             console.error(err.message);
+            console.warn('⚠️  ВНИМАНИЕ: MongoDB настроена, но недоступна. Данные будут читаться локально.');
+            console.warn('⚠️  ЗАЩИТА: Сохранение в MongoDB отключено до восстановления соединения.');
             isUsingMongoDB = false;
         });
 } else {
@@ -157,17 +161,36 @@ app.get('/api/load', async (req, res) => {
 app.post('/api/save', async (req, res) => {
     try {
         if (isUsingMongoDB) {
+            // ✅ MongoDB подключена - сохраняем в облако
             const operations = Object.entries(req.body).map(([key, value]) => ({
                 updateOne: { filter: { key }, update: { key, value }, upsert: true }
             }));
             if (operations.length > 0) await DataModel.bulkWrite(operations);
+            console.log('💾 Данные сохранены в MongoDB');
+        } else if (mongoDBWasConfigured) {
+            // 🛡️ ЗАЩИТА: MongoDB настроена, но недоступна - НЕ сохраняем локально!
+            console.warn('⚠️  ЗАЩИТА: Попытка сохранения заблокирована!');
+            console.warn('⚠️  MongoDB настроена в .env, но соединение потеряно.');
+            console.warn('⚠️  Данные НЕ будут сохранены локально, чтобы не перезаписать облачную БД.');
+            console.warn('💡 Восстановите соединение с интернетом или проверьте MongoDB Atlas.');
+
+            return res.status(503).json({
+                success: false,
+                error: 'MongoDB временно недоступна. Данные не сохранены для защиты от перезаписи.',
+                warning: 'Проверьте подключение к интернету. Данные в облаке в безопасности.',
+                mongoConfigured: true,
+                mongoConnected: false
+            });
         } else {
+            // ✅ MongoDB не настроена - работаем в автономном режиме
             Object.entries(req.body).forEach(([key, value]) => {
                 writeLocalData(key, value);
             });
+            console.log('💾 Данные сохранены локально (автономный режим)');
         }
         res.json({ success: true });
     } catch (error) {
+        console.error('❌ Ошибка сохранения:', error);
         res.status(500).json({ error: 'Ошибка сохранения' });
     }
 });

@@ -151,14 +151,78 @@ async function saveAll() {
     };
 
     try {
-        await fetch(`${API_URL}/save`, {
+        const response = await fetch(`${API_URL}/save`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(allData)
         });
+
+        // 🛡️ Проверка на защиту от перезаписи
+        if (response.status === 503) {
+            const errorData = await response.json();
+            console.warn('⚠️ ЗАЩИТА АКТИВИРОВАНА:', errorData.error);
+
+            // Показываем предупреждение пользователю
+            showMongoWarning(errorData.error);
+        } else if (!response.ok) {
+            throw new Error('Ошибка сохранения');
+        }
     } catch (error) {
         console.error('Ошибка при сохранении на сервер:', error);
     }
+}
+
+// 🛡️ Показать предупреждение о недоступности MongoDB
+function showMongoWarning(message) {
+    // Проверяем, не показано ли уже предупреждение
+    if (document.getElementById('mongo-warning-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'mongo-warning-banner';
+    banner.style.cssText = `
+        position: fixed;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+        z-index: 10000;
+        max-width: 600px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        animation: slideDown 0.3s ease;
+    `;
+    banner.innerHTML = `
+        <div style="margin-bottom: 8px;">⚠️ ЗАЩИТА ДАННЫХ АКТИВИРОВАНА</div>
+        <div style="font-size: 12px; font-weight: 400; opacity: 0.9;">
+            ${message}
+        </div>
+        <div style="font-size: 11px; margin-top: 8px; opacity: 0.8;">
+            Данные сохранены локально в браузере. Восстановите интернет-соединение.
+        </div>
+    `;
+
+    // Добавляем анимацию
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideDown {
+            from { top: -100px; opacity: 0; }
+            to { top: 70px; opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(banner);
+
+    // Автоматически скрыть через 10 секунд
+    setTimeout(() => {
+        banner.style.animation = 'slideDown 0.3s ease reverse';
+        setTimeout(() => banner.remove(), 300);
+    }, 10000);
 }
 
 // Запускаем загрузку при старте
@@ -317,6 +381,19 @@ function format(num) {
     return new Intl.NumberFormat('ru-RU').format(num);
 }
 
+// Форматирование в миллионы для дашборда
+function formatMillion(num) {
+    if (num === "" || num === undefined || isNaN(num)) return "0 млн";
+    const millions = num / 1000000;
+    if (millions >= 1) {
+        return millions.toFixed(1).replace('.', ',') + ' млн';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(0) + ' тыс';
+    } else {
+        return Math.round(num) + ' сум';
+    }
+}
+
 function fetchRates() {
     return {
         cny: parseFloat(document.getElementById('rateCNY').value) || 1,
@@ -390,6 +467,7 @@ function logAction(type, description, details = {}) {
 
 window.logAction = logAction;
 window.format = format;
+window.formatMillion = formatMillion;
 window.fetchRates = fetchRates;
 window.loadModule = loadModule;
 window.saveAll = saveAll;

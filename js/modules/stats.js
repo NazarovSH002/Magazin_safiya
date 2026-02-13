@@ -215,10 +215,18 @@ export function renderProfitBreakdown() {
             data[monthKey].days[dayKey].profit += profit;
 
             if (!data[monthKey].days[dayKey].products[item.name]) {
-                data[monthKey].days[dayKey].products[item.name] = { qty: 0, profit: 0 };
+                data[monthKey].days[dayKey].products[item.name] = {
+                    qty: 0,
+                    profit: 0,
+                    totalSalePrice: 0,
+                    totalCost: 0,
+                    priceCNY: item.priceCNY || 0
+                };
             }
             data[monthKey].days[dayKey].products[item.name].qty += item.cartQty;
             data[monthKey].days[dayKey].products[item.name].profit += profit;
+            data[monthKey].days[dayKey].products[item.name].totalSalePrice += item.priceUZS * item.cartQty;
+            data[monthKey].days[dayKey].products[item.name].totalCost += costUZS * item.cartQty;
         });
     });
 
@@ -258,12 +266,39 @@ export function renderProfitBreakdown() {
                     <span style="font-weight:600;">${window.format(Math.round(dayInfo.profit))} сум</span>
                 </div>
                 <div class="stats-day-content" style="display:none; padding:10px 15px; border-left:2px solid var(--accent); margin:5px 0 5px 10px;">
-                    ${Object.keys(dayInfo.products).map(pName => `
-                        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <span>${pName} <small style="color:var(--text-muted)">x${dayInfo.products[pName].qty}</small></span>
-                            <span style="color:var(--success)">+${window.format(Math.round(dayInfo.products[pName].profit))}</span>
+                    ${Object.keys(dayInfo.products).map(pName => {
+                const prod = dayInfo.products[pName];
+                const avgSalePrice = prod.totalSalePrice / prod.qty;
+                const avgCost = prod.totalCost / prod.qty;
+                return `
+                        <div style="background:rgba(255,255,255,0.02); border-radius:8px; padding:10px; margin-bottom:8px;">
+                            <div style="font-weight:600; margin-bottom:8px; color:var(--text);">${pName}</div>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; font-size:12px;">
+                                <div style="background:rgba(59,130,246,0.1); padding:6px 10px; border-radius:6px;">
+                                    <div style="color:var(--text-muted); font-size:10px; text-transform:uppercase;">Количество</div>
+                                    <div style="font-weight:700; color:var(--primary);">${prod.qty} шт</div>
+                                </div>
+                                <div style="background:rgba(16,185,129,0.1); padding:6px 10px; border-radius:6px;">
+                                    <div style="color:var(--text-muted); font-size:10px; text-transform:uppercase;">Продано на</div>
+                                    <div style="font-weight:700; color:var(--success);">${window.format(Math.round(prod.totalSalePrice))} сум</div>
+                                </div>
+                                <div style="background:rgba(245,158,11,0.1); padding:6px 10px; border-radius:6px;">
+                                    <div style="color:var(--text-muted); font-size:10px; text-transform:uppercase;">Себестоимость</div>
+                                    <div style="font-weight:700; color:#f59e0b;">${window.format(Math.round(prod.totalCost))} сум</div>
+                                </div>
+                                <div style="background:rgba(34,197,94,0.1); padding:6px 10px; border-radius:6px;">
+                                    <div style="color:var(--text-muted); font-size:10px; text-transform:uppercase;">Прибыль</div>
+                                    <div style="font-weight:700; color:#22c55e;">+${window.format(Math.round(prod.profit))} сум</div>
+                                </div>
+                            </div>
+                            <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05); font-size:11px; color:var(--text-muted);">
+                                <span>Цена за шт: ${window.format(Math.round(avgSalePrice))} сум</span>
+                                <span style="margin-left:15px;">Себестоимость за шт: ${window.format(Math.round(avgCost))} сум</span>
+                                <span style="margin-left:15px; color:var(--success);">Прибыль за шт: +${window.format(Math.round(prod.profit / prod.qty))} сум</span>
+                            </div>
                         </div>
-                    `).join('')}
+                        `;
+            }).join('')}
                 </div>
             `;
             daysContent.appendChild(dayDiv);

@@ -6,15 +6,20 @@ export function renderDashboard() {
     const rates = window.fetchRates();
 
     // 1. Считаем капитал на складе (в сумах на основе закупа в CNY)
+    const stockQty = products.reduce((sum, p) => sum + p.qty, 0);
     const stockValue = products.reduce((sum, p) => sum + (p.qty * (p.priceCNY / rates.cny * rates.uzs)), 0);
-    document.getElementById('stat-stock-value').innerText = window.format(Math.round(stockValue)) + " сум";
+    document.getElementById('stat-stock-value').innerText = `${window.format(stockQty)} шт • ${window.formatMillion(Math.round(stockValue))}`;
 
     // 2. Продажи и Прибыль сегодня
     const todayStr = new Date().toLocaleDateString();
     const todaySales = sales.filter(s => s.date.includes(todayStr));
 
     const salesToday = todaySales.reduce((sum, s) => sum + s.total, 0);
-    document.getElementById('stat-sales-today').innerText = window.format(salesToday) + " сум";
+    const salesTodayQty = todaySales.reduce((sum, s) => {
+        if (!Array.isArray(s.items)) return sum;
+        return sum + s.items.reduce((iSum, item) => iSum + item.cartQty, 0);
+    }, 0);
+    document.getElementById('stat-sales-today').innerText = `${window.format(salesTodayQty)} шт • ${window.formatMillion(salesToday)}`;
 
     const profitToday = todaySales.reduce((sum, s) => {
         if (!Array.isArray(s.items)) return sum; // Пропускаем если нет деталей
@@ -25,15 +30,17 @@ export function renderDashboard() {
         }, 0);
         return sum + saleProfit;
     }, 0);
-    document.getElementById('stat-profit-today').innerText = window.format(Math.round(profitToday)) + " сум";
+    document.getElementById('stat-profit-today').innerText = `${window.format(salesTodayQty)} шт • ${window.formatMillion(Math.round(profitToday))}`;
 
     // 3. Общие долги
     const totalDebts = debts.reduce((sum, d) => sum + d.total, 0);
-    document.getElementById('stat-total-debts').innerText = window.format(totalDebts) + " сум";
+    const debtsCount = debts.length;
+    document.getElementById('stat-total-debts').innerText = `${debtsCount} долг${debtsCount === 1 ? '' : debtsCount < 5 ? 'а' : 'ов'} • ${window.formatMillion(totalDebts)}`;
 
     // 4. Товаров в магазине (всего штук)
     const shopQty = shopProducts.reduce((sum, s) => sum + s.qty, 0);
-    document.getElementById('stat-shop-qty').innerText = window.format(shopQty) + " шт";
+    const shopValue = shopProducts.reduce((sum, s) => sum + (s.qty * (s.priceCNY / rates.cny * rates.uzs)), 0);
+    document.getElementById('stat-shop-qty').innerText = `${window.format(shopQty)} шт • ${window.formatMillion(Math.round(shopValue))}`;
 
     // 5. Последние операции на Дашборде
     const recentSalesList = document.getElementById('dashboard-recent-sales');

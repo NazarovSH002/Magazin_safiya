@@ -1,6 +1,33 @@
-node_modules
+# Зависимости
+node_modules/
+
+# Локальные данные (не загружать в Git)
+data/
 data/*.json
-.DS_Store
-*.bat
-desktop.ini
+
+# Переменные окружения (ВАЖНО: содержит пароли!)
 .env
+.env.local
+.env.*.local
+
+# Резервные копии
+backups/
+*.backup
+backup_*.json
+
+# Системные файлы
+.DS_Store
+desktop.ini
+Thumbs.db
+
+# Локальные скрипты запуска
+*.bat
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.temp
+.cache/
