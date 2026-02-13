@@ -143,7 +143,7 @@ export function renderStock() {
             </td>
             <td data-label="Кол-во">${p.qty}</td>
             <td data-label="Закуп" style="color:var(--text-muted)">${p.priceCNY} ¥</td>
-            <td data-label="Цена в суммах" style="font-weight:600">${window.format(p.priceUZS)}</td>
+            <td data-label="Себестоимость" style="font-weight:600">${window.format(p.costUZS || 0)}</td>
             <td data-label="Действие">
                 <div class="actions-cell">
                     <button class="btn btn-primary btn-sm" onclick="window.StockModule.transferToShop(${p.id})">В магазин</button>
