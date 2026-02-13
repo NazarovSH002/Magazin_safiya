@@ -5,10 +5,6 @@ export function calculateTarget() {
     const rates = window.fetchRates();
     const costUZS = Math.round((val / rates.cny) * rates.uzs);
     document.getElementById('pCostUZS').value = costUZS;
-    // Если цена продажи не указана, ставим равной себестоимости
-    if (!document.getElementById('pPriceUZS').value || document.getElementById('pPriceUZS').value == 0) {
-        document.getElementById('pPriceUZS').value = costUZS;
-    }
 }
 
 export function addOrUpdateProduct() {
@@ -120,7 +116,6 @@ export function clearStockForm() {
     document.getElementById('pQty').value = '';
     document.getElementById('pPriceCNY').value = '0.0';
     document.getElementById('pCostUZS').value = '0';
-    document.getElementById('pPriceUZS').value = '0';
     document.getElementById('pDate').value = new Date().toISOString().split('T')[0];
     if (document.getElementById('pToShop')) document.getElementById('pToShop').checked = false;
     window.editingId = null;
@@ -249,7 +244,6 @@ export function fillAsTemplate(id) {
     document.getElementById('pName').value = p.name;
     document.getElementById('pPriceCNY').value = p.priceCNY;
     document.getElementById('pCostUZS').value = p.costUZS || 0;
-    document.getElementById('pPriceUZS').value = p.priceUZS;
     // Сбрасываем ID редактирования, чтобы это считалось новым добавлением
     window.editingId = null;
     const btn = document.getElementById('saveStockBtn');
@@ -265,7 +259,6 @@ export function editProduct(id) {
     document.getElementById('pQty').value = p.qty;
     document.getElementById('pPriceCNY').value = p.priceCNY;
     document.getElementById('pCostUZS').value = p.costUZS || 0;
-    document.getElementById('pPriceUZS').value = p.priceUZS;
     document.getElementById('pDate').value = (p.date && p.date.includes('-')) ? p.date : new Date().toISOString().split('T')[0];
 
     window.editingId = id;
