@@ -18,10 +18,14 @@
             </div>
             <div class="form-group">
                 <label style="font-size: 12px; color: var(--text-muted);">Цена Закупки (¥)</label>
-                <input type="number" id="pPriceCNY" value="0.0">
+                <input type="number" id="pPriceCNY" value="0.0" oninput="calculateTarget()">
             </div>
             <div class="form-group">
-                <label style="font-size: 12px; color: var(--text-muted);">Цена в суммах (UZS)</label>
+                <label style="font-size: 12px; color: var(--text-muted);">Себестоимость (UZS)</label>
+                <input type="number" id="pCostUZS" value="0" placeholder="Автоматически рассчитается">
+            </div>
+            <div class="form-group">
+                <label style="font-size: 12px; color: var(--text-muted);">Цена продажи (UZS)</label>
                 <input type="number" id="pPriceUZS" value="0">
             </div>
             <div class="form-group">

@@ -396,12 +396,16 @@ function formatMillion(num) {
 
 // Универсальная функция расчета себестоимости
 function getCostUZS(item, rates) {
+    // Если есть costUZS (новое поле), используем его
+    if (item.costUZS && item.costUZS > 0) {
+        return item.costUZS;
+    }
     // Если есть priceCNY, считаем через курс
     if (item.priceCNY && item.priceCNY > 0) {
         return (item.priceCNY / rates.cny) * rates.uzs;
     }
-    // Если priceCNY = 0, используем priceUZS как себестоимость
-    return item.priceUZS || 0;
+    // Для старых товаров без costUZS возвращаем 0
+    return 0;
 }
 
 function fetchRates() {
