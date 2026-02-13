@@ -204,7 +204,7 @@ export function renderShopInventory() {
         tr.innerHTML = `
             <td data-label="Название" style="font-weight:600">${s.name}</td>
             <td data-label="Количество" style="font-weight:700; color:var(--success)">${s.qty} шт</td>
-            <td data-label="Цена">${window.format(s.priceUZS)} сум</td>
+            <td data-label="Себестоимость">${window.format(s.costUZS || 0)} сум</td>
             <td data-label="Дата переноса" style="font-size:12px; color:var(--text-muted)">${s.lastUpdate}</td>
             <td data-label="Действие">
                 <div class="actions-cell">
