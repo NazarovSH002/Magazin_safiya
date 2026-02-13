@@ -18,7 +18,7 @@ export function renderRetailList() {
         div.innerHTML = `
             <div style="font-weight:600; font-size:14px;">${p.name}</div>
             <div style="color:var(--success); font-size:12px;">В магазине: ${p.qty}</div>
-            <div style="color:var(--text-muted); font-size:11px;">${window.format(p.priceUZS)} сум</div>
+            <div style="color:var(--text-muted); font-size:11px;">${window.format(p.costUZS || 0)} сум</div>
         `;
         list.appendChild(div);
     });
@@ -41,7 +41,7 @@ export function renderWholesaleList() {
         div.innerHTML = `
             <div style="font-weight:600; font-size:14px;">${p.name}</div>
             <div style="color:var(--accent); font-size:12px;">В магазине: ${p.qty}</div>
-            <div style="color:var(--text-muted); font-size:11px;">${window.format(p.priceUZS)} сум</div>
+            <div style="color:var(--text-muted); font-size:11px;">${window.format(p.costUZS || 0)} сум</div>
         `;
         list.appendChild(div);
     });
@@ -63,7 +63,9 @@ export function addToCart(p, type) {
             renderCart(type);
         }
     } else {
-        cart.push({ ...p, cartQty: 1, priceUZS: p.priceUZS || "" });
+        // Устанавливаем цену продажи равной себестоимости по умолчанию
+        const defaultPrice = p.costUZS || p.priceUZS || 0;
+        cart.push({ ...p, cartQty: 1, priceUZS: defaultPrice });
         renderCart(type);
     }
 }
