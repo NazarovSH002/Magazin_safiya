@@ -7,7 +7,7 @@ export function renderDashboard() {
 
     // 1. Считаем капитал на складе (в сумах на основе закупа в CNY)
     const stockQty = products.reduce((sum, p) => sum + p.qty, 0);
-    const stockValue = products.reduce((sum, p) => sum + (p.qty * (p.priceCNY / rates.cny * rates.uzs)), 0);
+    const stockValue = products.reduce((sum, p) => sum + (p.qty * window.getCostUZS(p, rates)), 0);
     document.getElementById('stat-stock-value').innerText = `${window.format(stockQty)} шт • ${window.formatMillion(Math.round(stockValue))}`;
 
     // 2. Продажи и Прибыль сегодня
@@ -24,7 +24,7 @@ export function renderDashboard() {
     const profitToday = todaySales.reduce((sum, s) => {
         if (!Array.isArray(s.items)) return sum; // Пропускаем если нет деталей
         const saleProfit = s.items.reduce((iSum, item) => {
-            const costPerUnit = (item.priceCNY / rates.cny * rates.uzs);
+            const costPerUnit = window.getCostUZS(item, rates);
             const profitPerUnit = (parseInt(item.priceUZS) || 0) - costPerUnit;
             return iSum + (profitPerUnit * item.cartQty);
         }, 0);
@@ -39,7 +39,7 @@ export function renderDashboard() {
 
     // 4. Товаров в магазине (всего штук)
     const shopQty = shopProducts.reduce((sum, s) => sum + s.qty, 0);
-    const shopValue = shopProducts.reduce((sum, s) => sum + (s.qty * (s.priceCNY / rates.cny * rates.uzs)), 0);
+    const shopValue = shopProducts.reduce((sum, s) => sum + (s.qty * window.getCostUZS(s, rates)), 0);
     document.getElementById('stat-shop-qty').innerText = `${window.format(shopQty)} шт • ${window.formatMillion(Math.round(shopValue))}`;
 
     // 5. Последние операции на Дашборде

@@ -394,6 +394,16 @@ function formatMillion(num) {
     }
 }
 
+// Универсальная функция расчета себестоимости
+function getCostUZS(item, rates) {
+    // Если есть priceCNY, считаем через курс
+    if (item.priceCNY && item.priceCNY > 0) {
+        return (item.priceCNY / rates.cny) * rates.uzs;
+    }
+    // Если priceCNY = 0, используем priceUZS как себестоимость
+    return item.priceUZS || 0;
+}
+
 function fetchRates() {
     return {
         cny: parseFloat(document.getElementById('rateCNY').value) || 1,
@@ -468,6 +478,7 @@ function logAction(type, description, details = {}) {
 window.logAction = logAction;
 window.format = format;
 window.formatMillion = formatMillion;
+window.getCostUZS = getCostUZS;
 window.fetchRates = fetchRates;
 window.loadModule = loadModule;
 window.saveAll = saveAll;

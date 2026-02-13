@@ -47,8 +47,7 @@ function calculateFinancials() {
     const getProfit = (sale) => {
         let saleProfit = 0;
         sale.items.forEach(item => {
-            const priceCNY = item.priceCNY || 0;
-            const costUZS = (priceCNY / rates.cny) * rates.uzs;
+            const costUZS = window.getCostUZS(item, rates);
             const itemProfit = (item.priceUZS - costUZS) * item.cartQty;
             saleProfit += itemProfit;
         });
@@ -208,7 +207,7 @@ export function renderProfitBreakdown() {
         if (!data[monthKey].days[dayKey]) data[monthKey].days[dayKey] = { profit: 0, products: {} };
 
         s.items.forEach(item => {
-            const costUZS = ((item.priceCNY || 0) / rates.cny) * rates.uzs;
+            const costUZS = window.getCostUZS(item, rates);
             const profit = (item.priceUZS - costUZS) * item.cartQty;
 
             data[monthKey].profit += profit;
