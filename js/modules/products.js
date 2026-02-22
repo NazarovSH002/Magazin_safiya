@@ -2,8 +2,8 @@
 
 export function renderProductsList() {
     const query = (document.getElementById('productsSearch')?.value || '').toLowerCase();
-    const tbody = document.getElementById('products-summary-tbody');
-    if (!tbody) return;
+    const grid = document.getElementById('products-grid');
+    if (!grid) return;
 
     // Сводные данные
     const summary = {};
@@ -36,7 +36,7 @@ export function renderProductsList() {
     });
 
     // Очистка и отрисовка
-    tbody.innerHTML = '';
+    grid.innerHTML = '';
 
     let totalNames = 0;
     let totalWarehouseQty = 0;
@@ -66,29 +66,47 @@ export function renderProductsList() {
         totalShopVal += entry.shopSum;
         totalSoldVal += entry.soldSum;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td data-label="Товар" style="padding: 12px 8px;">
-                <div style="font-weight:600;">${name}</div>
-            </td>
-            <td data-label="Склад" style="text-align:center;">
-                <div style="font-weight:500;">${entry.warehouse} шт</div>
-                <div style="font-size:10px; color:var(--text-muted);">${window.format(entry.warehouseSum)} сум</div>
-            </td>
-            <td data-label="Магазин" style="text-align:center;">
-                <div style="font-weight:500;">${entry.shop} шт</div>
-                <div style="font-size:10px; color:var(--text-muted);">${window.format(entry.shopSum)} сум</div>
-            </td>
-            <td data-label="Продано" style="text-align:center;">
-                <div style="color:var(--success); font-weight:600;">${entry.sold} шт</div>
-                <div style="font-size:10px; color:var(--success); opacity:0.8;">${window.format(entry.soldSum)} сум</div>
-            </td>
-            <td data-label="ИТОГО БЫЛО" style="text-align:center; background:rgba(var(--accent-rgb), 0.05); border-left: 1px solid rgba(255,255,255,0.05);">
-                <div style="font-weight:800; color:var(--accent);">${totalWasQty} шт</div>
-                <div style="font-size:10px; color:var(--accent); opacity:0.8;">${window.format(totalWasSum)} сум</div>
-            </td>
+        const card = document.createElement('div');
+        card.className = 'card animate-fadeIn';
+        card.style.padding = '20px';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.gap = '15px';
+        card.style.border = '1px solid var(--border)';
+        card.style.background = 'rgba(255,255,255,0.02)';
+
+        card.innerHTML = `
+            <div style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                <h3 style="margin:0; font-size:18px; color:var(--text);">${name}</h3>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">На складе</div>
+                    <div style="font-weight: 700; font-size: 16px;">${entry.warehouse} <span style="font-size:11px; font-weight:400; opacity:0.6;">шт</span></div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top:2px;">${window.format(entry.warehouseSum)} сум</div>
+                </div>
+                
+                <div style="background: rgba(59, 130, 246, 0.05); padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">В магазине</div>
+                    <div style="font-weight: 700; font-size: 16px; color: #60a5fa;">${entry.shop} <span style="font-size:11px; font-weight:400; opacity:0.6;">шт</span></div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top:2px;">${window.format(entry.shopSum)} сум</div>
+                </div>
+                
+                <div style="background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Продано</div>
+                    <div style="font-weight: 700; font-size: 16px; color: var(--success);">${entry.sold} <span style="font-size:11px; font-weight:400; opacity:0.6;">шт</span></div>
+                    <div style="font-size: 12px; color: var(--success); opacity:0.8; margin-top:2px;">${window.format(entry.soldSum)} сум</div>
+                </div>
+                
+                <div style="background: rgba(139, 92, 246, 0.05); padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px;">Итого было</div>
+                    <div style="font-weight: 800; font-size: 16px; color: var(--accent);">${totalWasQty} <span style="font-size:11px; font-weight:400; opacity:0.6;">шт</span></div>
+                    <div style="font-size: 12px; color: var(--accent); opacity:0.8; margin-top:2px;">${window.format(totalWasSum)} сум</div>
+                </div>
+            </div>
         `;
-        tbody.appendChild(tr);
+        grid.appendChild(card);
     });
 
     // Обновление стат-карточек

@@ -36,20 +36,8 @@
         </div>
     </div>
 
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Название товара</th>
-                    <th style="text-align: center;">Склад (шт/сум)</th>
-                    <th style="text-align: center;">Магазин (шт/сум)</th>
-                    <th style="text-align: center;">Продано (шт/сум)</th>
-                    <th style="text-align: center; color: var(--accent);">ИТОГО БЫЛО (шт/сум)</th>
-                </tr>
-            </thead>
-            <tbody id="products-summary-tbody">
-                <!-- Заполняется динамически -->
-            </tbody>
-        </table>
+    <div id="products-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+        <!-- Карточки товаров будут здесь -->
     </div>
 </div>
