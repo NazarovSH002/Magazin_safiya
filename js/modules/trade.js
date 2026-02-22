@@ -225,24 +225,48 @@ export function renderDailySales() {
 
     dayTotalEl.innerText = window.format(dayTotal) + " UZS";
 
-    dailyList.innerHTML = daySales.map(s => `
-        <div style="padding:12px; border:1px solid var(--border); background:rgba(255,255,255,0.02); border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="font-weight:600; font-size:14px; margin-bottom:2px;">${s.customer} (Чек #${s.id.toString().slice(-4)})</div>
-                <div style="font-size:11px; color:var(--text-muted);">${s.date.split(',')[1] || ''} • ${s.items.length} поз.</div>
+    dailyList.innerHTML = daySales.map(s => {
+        const itemsList = s.items.map(i => `
+            <div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span>${i.name} x ${i.cartQty}</span>
+                <span>${window.format(i.priceUZS * i.cartQty)} сум</span>
             </div>
-            <div style="text-align:right;">
-                <div style="font-weight:700; color:var(--success); font-size:15px;">${window.format(s.total)}</div>
-                <button class="btn-sm" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:11px; text-decoration:underline; padding:0;" onclick="toggleDetails(${s.id})">детали</button>
+        `).join('');
+
+        return `
+        <div style="margin-bottom:10px;">
+            <div style="padding:12px; border:1px solid var(--border); background:rgba(255,255,255,0.02); border-radius:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="TradeModule.toggleDetails(${s.id})">
+                <div>
+                    <div style="font-weight:600; font-size:14px; margin-bottom:2px;">${s.customer} (Чек #${s.id.toString().slice(-4)})</div>
+                    <div style="font-size:11px; color:var(--text-muted);">${s.date.split(',')[1] || ''} • ${s.items.length} поз.</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:700; color:var(--success); font-size:15px;">${window.format(s.total)}</div>
+                    <button class="btn-sm" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:11px; text-decoration:underline; padding:0;">детали</button>
+                </div>
+            </div>
+            <div id="details-${s.id}" style="display:none; padding:12px; background:rgba(255,255,255,0.03); border-radius:0 0 10px 10px; margin-top:-5px; border:1px solid var(--border); border-top:none;">
+                <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; font-weight:700;">Состав чека:</div>
+                ${itemsList}
+                ${s.comment ? `<div style="font-size:11px; color:var(--accent); margin-top:8px;">💬 ${s.comment}</div>` : ''}
             </div>
         </div>
-    `).join('') || '<div style="color:var(--text-muted); text-align:center; padding:40px;">За этот день продаж не найдено</div>';
+        `;
+    }).join('') || '<div style="color:var(--text-muted); text-align:center; padding:40px;">За этот день продаж не найдено</div>';
 }
 
 export function selectRetailDate(dateStr) {
     const [d, m, y] = dateStr.split('.');
     document.getElementById('retailDate').value = `${y}-${m}-${d}`;
     renderDailySales();
+}
+
+export function toggleDetails(id) {
+    const el = document.getElementById(`details-${id}`);
+    if (el) {
+        const isHidden = el.style.display === 'none';
+        el.style.display = isHidden ? 'block' : 'none';
+    }
 }
 
 export function init() {
