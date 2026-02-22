@@ -114,22 +114,22 @@ export function renderProductsList() {
 
     if (document.getElementById('stats-total-warehouse')) {
         document.getElementById('stats-total-warehouse').innerHTML = `
-            <div style="font-size:20px; font-weight:700;">${totalWarehouseQty} <span style="font-size:12px; font-weight:400; opacity:0.6;">шт</span></div>
-            <div style="font-size:13px; font-weight:400; color:var(--text-muted); margin-top:2px;">${window.formatMillion(totalWarehouseVal)}</div>
+            ${totalWarehouseQty} <span style="font-size:12px; font-weight:400; opacity:0.6;">шт</span>
+            <div style="font-size:13px; font-weight:400; color:var(--text-muted); margin-top:4px;">${window.formatMillion(totalWarehouseVal)}</div>
         `;
     }
 
     if (document.getElementById('stats-total-shop')) {
         document.getElementById('stats-total-shop').innerHTML = `
-            <div style="font-size:20px; font-weight:700;">${totalShopQty} <span style="font-size:12px; font-weight:400; opacity:0.6;">шт</span></div>
-            <div style="font-size:13px; font-weight:400; color:var(--text-muted); margin-top:2px;">${window.formatMillion(totalShopVal)}</div>
+            ${totalShopQty} <span style="font-size:12px; font-weight:400; opacity:0.6;">шт</span>
+            <div style="font-size:13px; font-weight:400; color:var(--text-muted); margin-top:4px;">${window.formatMillion(totalShopVal)}</div>
         `;
     }
 
     if (document.getElementById('stats-total-sold')) {
         document.getElementById('stats-total-sold').innerHTML = `
-            <div style="font-size:20px; font-weight:700;">${totalSoldQty} <span style="font-size:12px; font-weight:400; opacity:0.6;">шт</span></div>
-            <div style="font-size:13px; font-weight:600; color:var(--success); margin-top:2px;">${window.formatMillion(totalSoldVal)}</div>
+            ${totalSoldQty} <span style="font-size:12px; font-weight:400; opacity:0.6;">шт</span>
+            <div style="font-size:13px; font-weight:600; color:var(--success); margin-top:4px;">${window.formatMillion(totalSoldVal)}</div>
         `;
     }
 }
