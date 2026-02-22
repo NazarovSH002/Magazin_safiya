@@ -172,49 +172,73 @@ export function printProductsReport() {
         .filter(key => key.toLowerCase().includes(query))
         .sort((a, b) => a.localeCompare(b));
 
+    let grandWarehouse = 0;
+    let grandShop = 0;
+    let grandSold = 0;
+    let grandTotalQty = 0;
+    let grandTotalCost = 0;
+
     let rowsHtml = sortedKeys.map((name, idx) => {
         const e = summary[name];
         const totalQty = e.warehouse + e.shop + e.sold;
         const totalCost = e.warehouseSum + e.shopSum + e.soldCostSum;
+
+        grandWarehouse += e.warehouse;
+        grandShop += e.shop;
+        grandSold += e.sold;
+        grandTotalQty += totalQty;
+        grandTotalCost += totalCost;
+
         return `
             <tr>
-                <td style="text-align:center">${idx + 1}</td>
-                <td>${name}</td>
-                <td style="text-align:center">${e.warehouse}</td>
-                <td style="text-align:center">${e.shop}</td>
-                <td style="text-align:center">${e.sold}</td>
-                <td style="text-align:center; font-weight:700;">${totalQty}</td>
-                <td style="text-align:right">${window.format(totalCost)}</td>
+                <td style="text-align:center; border: 1px solid #000; padding: 6px; color: #000 !important;">${idx + 1}</td>
+                <td style="border: 1px solid #000; padding: 6px; color: #000 !important; font-weight: 500;">${name}</td>
+                <td style="text-align:center; border: 1px solid #000; padding: 6px; color: #000 !important;">${e.warehouse}</td>
+                <td style="text-align:center; border: 1px solid #000; padding: 6px; color: #000 !important;">${e.shop}</td>
+                <td style="text-align:center; border: 1px solid #000; padding: 6px; color: #000 !important;">${e.sold}</td>
+                <td style="text-align:center; font-weight:800; border: 1px solid #000; padding: 6px; color: #000 !important;">${totalQty}</td>
+                <td style="text-align:right; border: 1px solid #000; padding: 6px; color: #000 !important; font-weight: 600;">${window.format(totalCost)}</td>
             </tr>
         `;
     }).join('');
 
     printSection.innerHTML = `
-        <div style="font-family: 'Inter', Arial, sans-serif; color: #000 !important; padding: 30px; border: 2px solid #000; max-width: 1000px; margin: 0 auto; background: #fff;">
-            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px;">
-                <h1 style="margin: 0; font-size: 22px; text-transform: uppercase; color: #000 !important;">Сводный отчет по товарам</h1>
-                <p style="margin: 5px 0; color: #000 !important;">Дата: ${new Date().toLocaleString()}</p>
+        <div style="font-family: 'Inter', Arial, sans-serif; color: #000 !important; padding: 30px; border: 2px solid #000; max-width: 1050px; margin: 0 auto; background: #fff;">
+            <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 15px;">
+                <h1 style="margin: 0; font-size: 26px; font-weight: 900; text-transform: uppercase; color: #000 !important;">Сводный отчет по товарам</h1>
+                <p style="margin: 5px 0; font-size: 16px; font-weight: 600; color: #000 !important;">Дата выгрузки: ${new Date().toLocaleString('ru-RU')}</p>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; color: #000 !important; font-size: 12px; border: 1px solid #000;">
+            <table style="width: 100%; border-collapse: collapse; color: #000 !important; font-size: 14px; border: 2px solid #000;">
                 <thead>
-                    <tr style="background: #f0f0f0;">
-                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">№</th>
-                        <th style="padding: 8px; border: 1px solid #000; text-align: left;">Товар</th>
-                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Склад (шт)</th>
-                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Магаз (шт)</th>
-                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Прод (шт)</th>
-                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Итого (шт)</th>
-                        <th style="padding: 8px; border: 1px solid #000; text-align: right;">Итого (себ-сть)</th>
+                    <tr style="background: #e0e0e0;">
+                        <th style="padding: 10px; border: 1px solid #000; text-align: center; width: 40px; color: #000 !important; font-weight: 900;">№</th>
+                        <th style="padding: 10px; border: 1px solid #000; text-align: left; color: #000 !important; font-weight: 900;">Наименование товара</th>
+                        <th style="padding: 10px; border: 1px solid #000; text-align: center; width: 80px; color: #000 !important; font-weight: 900;">Склад (шт)</th>
+                        <th style="padding: 10px; border: 1px solid #000; text-align: center; width: 80px; color: #000 !important; font-weight: 900;">Магаз (шт)</th>
+                        <th style="padding: 10px; border: 1px solid #000; text-align: center; width: 80px; color: #000 !important; font-weight: 900;">Прод (шт)</th>
+                        <th style="padding: 10px; border: 1px solid #000; text-align: center; width: 90px; color: #000 !important; font-weight: 900;">Итого (шт)</th>
+                        <th style="padding: 10px; border: 1px solid #000; text-align: right; width: 150px; color: #000 !important; font-weight: 900;">Итого (себ-сть)</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody style="color: #000 !important;">
                     ${rowsHtml}
                 </tbody>
+                <tfoot>
+                    <tr style="background: #d0d0d0; font-weight: 900; color: #000 !important;">
+                        <td colspan="2" style="padding: 12px; border: 1px solid #000; text-align: right; text-transform: uppercase; color: #000 !important;">ОБЩИЙ ИТОГ:</td>
+                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandWarehouse}</td>
+                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandShop}</td>
+                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandSold}</td>
+                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandTotalQty}</td>
+                        <td style="padding: 12px; border: 1px solid #000; text-align: right; font-size: 16px; color: #000 !important;">${window.format(grandTotalCost)} сум</td>
+                    </tr>
+                </tfoot>
             </table>
 
-            <div style="margin-top: 30px; text-align: right; font-weight: bold; font-size: 14px; color: #000 !important;">
-                М.П. ____________________
+            <div style="margin-top: 50px; display: flex; justify-content: space-between; font-weight: 900; font-size: 16px; color: #000 !important;">
+                <span style="color: #000 !important;">Всего позиций: ${sortedKeys.length}</span>
+                <span style="color: #000 !important;">М.П. Продавец: ____________________</span>
             </div>
         </div>
     `;
@@ -223,7 +247,7 @@ export function printProductsReport() {
     printSection.style.display = 'none';
 }
 
-// Вспомогательная функция для сбора данных (чтобы не дублировать код)
+// Вспомогательная функция для сбора данных
 function getSummaryData() {
     const summary = {};
     (window.products || []).forEach(p => {
