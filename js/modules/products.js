@@ -143,34 +143,7 @@ export function renderProductsList() {
 }
 
 export function exportToCSV() {
-    // Получаем текущие данные (как в render)
-    const summary = {};
-
-    (window.products || []).forEach(p => {
-        const key = p.name;
-        if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
-        summary[key].warehouse += (p.qty || 0);
-        summary[key].warehouseSum += (p.qty || 0) * (p.costUZS || 0);
-    });
-
-    (window.shopProducts || []).forEach(s => {
-        const key = s.name;
-        if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
-        summary[key].shop += (s.qty || 0);
-        summary[key].shopSum += (s.qty || 0) * (s.costUZS || 0);
-    });
-
-    (window.sales || []).forEach(sale => {
-        (sale.items || []).forEach(item => {
-            const key = item.name;
-            if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
-            summary[key].sold += (item.cartQty || 0);
-            summary[key].soldSum += (item.cartQty || 0) * (item.priceUZS || 0);
-            summary[key].soldCostSum += (item.cartQty || 0) * (item.costUZS || 0);
-        });
-    });
-
-    // Формируем CSV
+    const summary = getSummaryData();
     let csv = "Товар;На складе (шт);На складе (сумм);В магазине (шт);В магазине (сумм);Продано (шт);Продано (выручка);Итого было (шт);Итого было (себестоимость)\n";
 
     Object.keys(summary).sort().forEach(name => {
@@ -180,12 +153,101 @@ export function exportToCSV() {
         csv += `${name};${entry.warehouse};${entry.warehouseSum};${entry.shop};${entry.shopSum};${entry.sold};${entry.soldSum};${totalQty};${totalCostSum}\n`;
     });
 
-    // Скачивание
     const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `inventory_report_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+}
+
+export function printProductsReport() {
+    const summary = getSummaryData();
+    const query = (document.getElementById('productsSearch')?.value || '').toLowerCase();
+
+    const printSection = document.getElementById('print-section');
+    if (!printSection) return;
+    printSection.style.display = 'block';
+
+    const sortedKeys = Object.keys(summary)
+        .filter(key => key.toLowerCase().includes(query))
+        .sort((a, b) => a.localeCompare(b));
+
+    let rowsHtml = sortedKeys.map((name, idx) => {
+        const e = summary[name];
+        const totalQty = e.warehouse + e.shop + e.sold;
+        const totalCost = e.warehouseSum + e.shopSum + e.soldCostSum;
+        return `
+            <tr>
+                <td style="text-align:center">${idx + 1}</td>
+                <td>${name}</td>
+                <td style="text-align:center">${e.warehouse}</td>
+                <td style="text-align:center">${e.shop}</td>
+                <td style="text-align:center">${e.sold}</td>
+                <td style="text-align:center; font-weight:700;">${totalQty}</td>
+                <td style="text-align:right">${window.format(totalCost)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    printSection.innerHTML = `
+        <div style="font-family: 'Inter', Arial, sans-serif; color: #000 !important; padding: 30px; border: 2px solid #000; max-width: 1000px; margin: 0 auto; background: #fff;">
+            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+                <h1 style="margin: 0; font-size: 22px; text-transform: uppercase; color: #000 !important;">Сводный отчет по товарам</h1>
+                <p style="margin: 5px 0; color: #000 !important;">Дата: ${new Date().toLocaleString()}</p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; color: #000 !important; font-size: 12px; border: 1px solid #000;">
+                <thead>
+                    <tr style="background: #f0f0f0;">
+                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">№</th>
+                        <th style="padding: 8px; border: 1px solid #000; text-align: left;">Товар</th>
+                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Склад (шт)</th>
+                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Магаз (шт)</th>
+                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Прод (шт)</th>
+                        <th style="padding: 8px; border: 1px solid #000; text-align: center;">Итого (шт)</th>
+                        <th style="padding: 8px; border: 1px solid #000; text-align: right;">Итого (себ-сть)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+
+            <div style="margin-top: 30px; text-align: right; font-weight: bold; font-size: 14px; color: #000 !important;">
+                М.П. ____________________
+            </div>
+        </div>
+    `;
+
+    window.print();
+    printSection.style.display = 'none';
+}
+
+// Вспомогательная функция для сбора данных (чтобы не дублировать код)
+function getSummaryData() {
+    const summary = {};
+    (window.products || []).forEach(p => {
+        const key = p.name;
+        if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
+        summary[key].warehouse += (p.qty || 0);
+        summary[key].warehouseSum += (p.qty || 0) * (p.costUZS || 0);
+    });
+    (window.shopProducts || []).forEach(s => {
+        const key = s.name;
+        if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
+        summary[key].shop += (s.qty || 0);
+        summary[key].shopSum += (s.qty || 0) * (s.costUZS || 0);
+    });
+    (window.sales || []).forEach(sale => {
+        (sale.items || []).forEach(item => {
+            const key = item.name;
+            if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
+            summary[key].sold += (item.cartQty || 0);
+            summary[key].soldSum += (item.cartQty || 0) * (item.priceUZS || 0);
+            summary[key].soldCostSum += (item.cartQty || 0) * (item.costUZS || 0);
+        });
+    });
+    return summary;
 }
 
 export function init() {
