@@ -14,7 +14,8 @@ const viewTemplates = {
     installments: 'views/installments.html',
     history: 'views/history.html',
     users: 'views/users.html',
-    stats: 'views/stats.html'
+    stats: 'views/stats.html',
+    products: 'views/products.html'
 };
 
 /**
