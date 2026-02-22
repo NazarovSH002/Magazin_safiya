@@ -1,0 +1,55 @@
+<div id="view-products" class="view card animate-fadeIn">
+    <div class="view-header" style="margin-bottom: 24px;">
+        <div>
+            <h2 style="margin: 0; font-size: 24px;">Общий список товаров</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Сводная информация по остаткам и
+                продажам</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <button class="btn btn-outline" onclick="window.ProductsModule.exportToCSV()"
+                style="padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                📥 Скачать Excel
+            </button>
+            <div class="search-box">
+                <input type="text" id="productsSearch" placeholder="Поиск товара..."
+                    oninput="window.ProductsModule.renderProductsList()">
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
+        <div class="stat-card">
+            <span class="stat-label">Всего позиций</span>
+            <span class="stat-value" id="stats-total-names">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Штук на складе</span>
+            <span class="stat-value" id="stats-total-warehouse">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Штук в магазине</span>
+            <span class="stat-value" id="stats-total-shop">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Всего продано</span>
+            <span class="stat-value" id="stats-total-sold">0</span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Название товара</th>
+                    <th style="text-align: center;">Склад (шт/сум)</th>
+                    <th style="text-align: center;">Магазин (шт/сум)</th>
+                    <th style="text-align: center;">Продано (шт/сум)</th>
+                    <th style="text-align: center; color: var(--accent);">ИТОГО БЫЛО (шт/сум)</th>
+                </tr>
+            </thead>
+            <tbody id="products-summary-tbody">
+                <!-- Заполняется динамически -->
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -19,7 +19,8 @@ const moduleLoaders = {
     users: () => import('./modules/users.js'),
     trade: () => import('./modules/trade.js'),
     history: () => import('./modules/history.js'),
-    stats: () => import('./modules/stats.js')
+    stats: () => import('./modules/stats.js'),
+    products: () => import('./modules/products.js')
 };
 
 async function loadModule(moduleName) {
@@ -270,7 +271,7 @@ function showApp() {
 function applyRoleLimits() {
     if (window.currentUser && window.currentUser.role === 'seller') {
         // Скрываем вкладки для продавца
-        const forbiddenTabs = ['dashboard', 'stock', 'shop', 'history', 'debts', 'installments', 'users'];
+        const forbiddenTabs = ['dashboard', 'stock', 'shop', 'history', 'debts', 'installments', 'users', 'products'];
         document.querySelectorAll('.tab').forEach(tab => {
             const onclick = tab.getAttribute('onclick') || '';
             if (forbiddenTabs.some(t => onclick.includes(`'${t}'`))) {
@@ -372,6 +373,11 @@ async function switchTab(viewId) {
     if (viewId === 'stats') {
         const m = await loadModule('stats');
         if (m && m.renderStats) m.renderStats();
+    }
+
+    if (viewId === 'products') {
+        const m = await loadModule('products');
+        if (m && m.renderProductsList) m.renderProductsList();
     }
 }
 
