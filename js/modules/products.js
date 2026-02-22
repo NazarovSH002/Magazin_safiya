@@ -211,7 +211,7 @@ export function printProductsReport() {
 
             <table style="width: 100%; border-collapse: collapse; color: #000 !important; font-size: 14px; border: 2px solid #000;">
                 <thead>
-                    <tr style="background: #e0e0e0;">
+                    <tr style="background: #e0e0e0; position: sticky; top: 0;">
                         <th style="padding: 10px; border: 1px solid #000; text-align: center; width: 40px; color: #000 !important; font-weight: 900;">№</th>
                         <th style="padding: 10px; border: 1px solid #000; text-align: left; color: #000 !important; font-weight: 900;">Наименование товара</th>
                         <th style="padding: 10px; border: 1px solid #000; text-align: center; width: 80px; color: #000 !important; font-weight: 900;">Склад (шт)</th>
@@ -224,20 +224,31 @@ export function printProductsReport() {
                 <tbody style="color: #000 !important;">
                     ${rowsHtml}
                 </tbody>
-                <tfoot>
+                <tfoot style="display: table-footer-group;">
                     <tr style="background: #d0d0d0; font-weight: 900; color: #000 !important;">
-                        <td colspan="2" style="padding: 12px; border: 1px solid #000; text-align: right; text-transform: uppercase; color: #000 !important;">ОБЩИЙ ИТОГ:</td>
-                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandWarehouse}</td>
-                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandShop}</td>
-                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandSold}</td>
-                        <td style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important;">${grandTotalQty}</td>
-                        <td style="padding: 12px; border: 1px solid #000; text-align: right; font-size: 16px; color: #000 !important;">${window.format(grandTotalCost)} сум</td>
+                        <td colspan="2" style="padding: 12px; border: 1px solid #000; text-align: right; text-transform: uppercase; color: #000 !important;">ИТОГ СТРАНИЦЫ:</td>
+                        <td colspan="4" style="padding: 12px; border: 1px solid #000; text-align: center; color: #000 !important; font-size: 11px;">Сумма всех позиций отчета указана в конце документа</td>
+                        <td style="padding: 12px; border: 1px solid #000; text-align: right; color: #000 !important;">...</td>
                     </tr>
                 </tfoot>
             </table>
 
+            <div style="margin-top: 30px; padding: 20px; border: 3px solid #000; background: #f2f2f2; color: #000 !important; page-break-inside: avoid;">
+                <h2 style="margin: 0 0 15px 0; text-align: center; text-transform: uppercase; font-size: 20px;">ОБЩИЙ ИТОГ ОТЧЕТА</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; font-weight: 900;">
+                    <div style="border-bottom: 1px solid #000; padding: 5px 0;">Всего позиций (наименований):</div>
+                    <div style="border-bottom: 1px solid #000; padding: 5px 0; text-align: right;">${sortedKeys.length}</div>
+                    
+                    <div style="border-bottom: 1px solid #000; padding: 5px 0;">Общее кол-во (шт):</div>
+                    <div style="border-bottom: 1px solid #000; padding: 5px 0; text-align: right;">${grandTotalQty} шт</div>
+                    
+                    <div style="border-bottom: 2px solid #000; padding: 10px 0; font-size: 22px;">ОБЩАЯ СУММА (СЕБ-СТЬ):</div>
+                    <div style="border-bottom: 2px solid #000; padding: 10px 0; text-align: right; font-size: 22px;">${window.format(grandTotalCost)} сум</div>
+                </div>
+            </div>
+
             <div style="margin-top: 50px; display: flex; justify-content: space-between; font-weight: 900; font-size: 16px; color: #000 !important;">
-                <span style="color: #000 !important;">Всего позиций: ${sortedKeys.length}</span>
+                <span style="color: #000 !important;">М.П. Руководитель: ____________________</span>
                 <span style="color: #000 !important;">М.П. Продавец: ____________________</span>
             </div>
         </div>
