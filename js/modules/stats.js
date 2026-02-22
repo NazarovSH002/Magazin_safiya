@@ -1,33 +1,14 @@
 // === МОДУЛЬ СТАТИСТИКИ И РАСХОДОВ ===
 
 export function renderStats() {
-    const tbody = document.getElementById('expenses-tbody');
-    const query = (document.getElementById('expenseSearch')?.value || '').toLowerCase();
-    if (!tbody) return;
-
-    // 1. Рендерим таблицу расходов
-    tbody.innerHTML = '';
-    const filteredExpenses = (window.expenses || [])
-        .filter(ex =>
-            ex.category.toLowerCase().includes(query) ||
-            ex.comment.toLowerCase().includes(query)
-        )
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    filteredExpenses.forEach(ex => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td style="font-size: 12px;">${new Date(ex.date).toLocaleDateString()}</td>
-            <td><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 11px;">${ex.category}</span></td>
-            <td style="font-size: 13px; color: var(--text-muted);">${ex.comment}</td>
-            <td style="font-weight: 700; color: #ef4444;">-${window.format(ex.amount)}</td>
-            <td><button class="btn-icon-danger" onclick="window.StatsModule.deleteExpense(${ex.id})">×</button></td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-    // 2. Расчет прибыли и статистики
+    // 1. Расчет прибыли и статистики
     calculateFinancials();
+
+    // 2. Рендерим аналитику расходов
+    renderExpensesBreakdown();
+
+    // 3. Рендерим аналитику прибыли
+    renderProfitBreakdown();
 }
 
 function calculateFinancials() {
@@ -109,10 +90,18 @@ function calculateFinancials() {
         }
     });
 
-    // Вычитаем расходы
+    // ВЫЧИТАЕМ ТОЛЬКО ОПЕРАЦИОННЫЕ РАСХОДЫ (ИСКЛЮЧАЕМ ЗАКУПКУ ТОВАРА ИЗ ПРИБЫЛИ)
+    let totalInvested = 0;
     expenses.forEach(ex => {
         const exParts = ex.date.split('-');
         const exDate = new Date(exParts[0], exParts[1] - 1, exParts[2]);
+
+        // Если это закупка товара, суммируем отдельно и НЕ вычитаем из прибыли
+        if (ex.category === "Закупка товара") {
+            totalInvested += ex.amount;
+            return;
+        }
+
         stats.total.profit -= ex.amount;
 
         if (exDate >= startOfDay) stats.day.profit -= ex.amount;
@@ -144,19 +133,36 @@ function calculateFinancials() {
         periodEl.style.color = stats.period.profit >= 0 ? 'var(--success)' : '#ef4444';
     }
 
-    renderProfitBreakdown();
-
     // Сводка
-    const expMonth = expenses.filter(ex => new Date(ex.date) >= startOfMonth).reduce((sum, e) => sum + e.amount, 0);
-    document.getElementById('stats-summary-text').innerHTML = `
-        В этом месяце вы совершили <b>${stats.month.count}</b> продаж.<br><br>
-        Чистая прибыль (после расходов): <br>
-        <span style="color: ${stats.month.profit >= 0 ? 'var(--success)' : '#ef4444'}; font-weight: 700;">
-            ${window.format(Math.round(stats.month.profit))} сум
-        </span><br><br>
-        Общие расходы месяца: <br>
-        <span style="color: #ef4444; font-weight: 600;">-${window.format(expMonth)} сум</span>
-    `;
+    const monthExpensesOnly = expenses.filter(ex =>
+        new Date(ex.date) >= startOfMonth &&
+        ex.category !== "Закупка товара"
+    ).reduce((sum, e) => sum + e.amount, 0);
+
+    const monthInvestmentsOnly = expenses.filter(ex =>
+        new Date(ex.date) >= startOfMonth &&
+        ex.category === "Закупка товара"
+    ).reduce((sum, e) => sum + e.amount, 0);
+
+    const summaryText = document.getElementById('stats-summary-text');
+    if (summaryText) {
+        summaryText.innerHTML = `
+            В этом месяце вы совершили <b>${stats.month.count}</b> продаж.<br><br>
+            <b>Чистая прибыль:</b> <br>
+            <span style="color: ${stats.month.profit >= 0 ? 'var(--success)' : '#ef4444'}; font-weight: 700; font-size: 1.1em;">
+                ${window.format(Math.round(stats.month.profit))} сум
+            </span><br>
+            <small style="color: var(--text-muted); font-size: 11px;">(Маржа минус операционные расходы)</small>
+            <br><br>
+            Общие расходы (аренда и т.д.): <br>
+            <span style="color: #ef4444; font-weight: 600;">-${window.format(monthExpensesOnly)} сум</span>
+            <br><br>
+            Закупка нового товара: <br>
+            <span style="color: var(--accent); font-weight: 600;">${window.format(monthInvestmentsOnly)} сум</span>
+            <br>
+            <small style="color: var(--text-muted); font-size: 11px;">(Не вычитается из чистой прибыли)</small>
+        `;
+    }
 }
 
 function updateStatCard(id, data) {
@@ -167,6 +173,108 @@ function updateStatCard(id, data) {
         profitEl.style.color = data.profit >= 0 ? 'var(--success)' : '#ef4444';
     }
     if (salesEl) salesEl.innerText = `Продаж: ${data.count}`;
+}
+
+export function renderExpensesBreakdown() {
+    const container = document.getElementById('stats-expenses-breakdown');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const query = (document.getElementById('expenseSearch')?.value || '').toLowerCase();
+    const expenses = (window.expenses || []).filter(ex =>
+        ex.category.toLowerCase().includes(query) ||
+        ex.comment.toLowerCase().includes(query)
+    );
+
+    const statsStart = document.getElementById('statsStart')?.value;
+    const statsEnd = document.getElementById('statsEnd')?.value;
+
+    // Группировка: Месяц -> День -> Категория/Расход
+    const data = {};
+
+    expenses.forEach(ex => {
+        const exParts = ex.date.split('-');
+        const exDate = new Date(exParts[0], exParts[1] - 1, exParts[2]);
+
+        // Применяем фильтр по датам
+        if (statsStart && exDate < new Date(statsStart)) return;
+        if (statsEnd) {
+            const endLimit = new Date(statsEnd);
+            endLimit.setHours(23, 59, 59, 999);
+            if (exDate > endLimit) return;
+        }
+
+        const monthKey = exDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+        const dayKey = exDate.toLocaleDateString('ru-RU');
+
+        if (!data[monthKey]) data[monthKey] = { total: 0, days: {} };
+        if (!data[monthKey].days[dayKey]) data[monthKey].days[dayKey] = { total: 0, items: [] };
+
+        data[monthKey].total += ex.amount;
+        data[monthKey].days[dayKey].total += ex.amount;
+        data[monthKey].days[dayKey].items.push(ex);
+    });
+
+    // Отрисовка расходов
+    Object.keys(data).sort((a, b) => {
+        const parseMonth = (str) => {
+            const parts = str.split(' ');
+            const months = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+            return new Date(parts[1], months.indexOf(parts[0].toLowerCase()));
+        };
+        return parseMonth(b) - parseMonth(a);
+    }).forEach(month => {
+        const monthInfo = data[month];
+
+        const monthDiv = document.createElement('div');
+        monthDiv.className = 'month-group';
+
+        const isInvestmentMonth = monthInfo.total > 0; // Для визуального стиля
+
+        monthDiv.innerHTML = `
+            <div class="stats-group-header" onclick="this.nextElementSibling.classList.toggle('active')" style="display:flex; justify-content:space-between; padding:12px; background:rgba(255,255,255,0.05); border-radius:8px; cursor:pointer; font-weight:700;">
+                <span>📅 ${month}</span>
+                <span style="color:${isInvestmentMonth ? 'var(--text)' : '#ef4444'}">${window.format(monthInfo.total)} сум</span>
+            </div>
+            <div class="stats-group-content" style="display:none; padding-left:15px; margin-top:5px; flex-direction:column; gap:8px;"></div>
+        `;
+
+        const daysContent = monthDiv.querySelector('.stats-group-content');
+
+        Object.keys(monthInfo.days).sort((a, b) => {
+            const dateA = new Date(a.split('.').reverse().join('-'));
+            const dateB = new Date(b.split('.').reverse().join('-'));
+            return dateB - dateA;
+        }).forEach(day => {
+            const dayInfo = monthInfo.days[day];
+            const dayDiv = document.createElement('div');
+            dayDiv.innerHTML = `
+                <div class="stats-day-header" onclick="this.nextElementSibling.classList.toggle('active')" style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:6px; cursor:pointer; font-size:14px;">
+                    <span>📍 ${day}</span>
+                    <span style="font-weight:600;">${window.format(dayInfo.total)} сум</span>
+                </div>
+                <div class="stats-day-content" style="display:none; padding:10px 15px; border-left:2px solid var(--accent); margin:5px 0 5px 10px; flex-direction:column; gap:8px;">
+                    ${dayInfo.items.map(ex => {
+                const isInv = ex.category === "Закупка товара";
+                return `
+                        <div style="background:rgba(255,255,255,0.02); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center; border: ${isInv ? '1px solid rgba(139, 92, 246, 0.2)' : 'none'}">
+                            <div>
+                                <div style="font-weight:600; font-size:14px; color:${isInv ? 'var(--accent)' : 'var(--text)'};">${ex.category}</div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${ex.comment}</div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <div style="font-weight:700; color:${isInv ? 'var(--accent)' : '#ef4444'};">${isInv ? '' : '-'}${window.format(ex.amount)}</div>
+                                <button class="btn-icon-danger" onclick="window.StatsModule.deleteExpense(${ex.id})" style="width:28px; height:28px;">×</button>
+                            </div>
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+            daysContent.appendChild(dayDiv);
+        });
+
+        container.appendChild(monthDiv);
+    });
 }
 
 export function renderProfitBreakdown() {

@@ -73,27 +73,17 @@
                 </div>
             </div>
 
-            <!-- Expenses Table -->
-            <div class="card" style="min-height: 400px;">
+            <!-- Аналитика расходов -->
+            <div class="card" style="min-height: 400px; margin-bottom: 25px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="font-size: 18px; font-weight: 700;">💸 Расходы</h3>
+                    <h3 style="font-size: 18px; font-weight: 700;">📊 Аналитика расходов (Месяц > День > Категория)</h3>
                     <div class="search-box" style="margin-bottom: 0; width: 250px;">
-                        <input type="text" id="expenseSearch" placeholder="Поиск расходов..." oninput="renderStats()">
+                        <input type="text" id="expenseSearch" placeholder="Поиск расходов..."
+                            oninput="window.StatsModule.renderStats()">
                     </div>
                 </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Дата</th>
-                                <th>Категория</th>
-                                <th>Описание</th>
-                                <th>Сумма</th>
-                                <th style="width: 50px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="expenses-tbody"></tbody>
-                    </table>
+                <div id="stats-expenses-breakdown" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="color: var(--text-muted); text-align: center; padding: 20px;">Загрузка расходов...</div>
                 </div>
             </div>
         </div>
@@ -109,6 +99,7 @@
                     <label>Категория</label>
                     <select id="expCategory"
                         style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-input); color: var(--text); border: 1px solid var(--border);">
+                        <option value="Закупка товара">Закупка товара (Инвестиция)</option>
                         <option value="Аренда">Аренда</option>
                         <option value="Зарплата">Зарплата</option>
                         <option value="Налоги">Налоги</option>
