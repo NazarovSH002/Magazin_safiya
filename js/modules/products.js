@@ -11,18 +11,22 @@ export function renderProductsList() {
 
     // 1. Учет товаров на складе (по себестоимости)
     (window.products || []).forEach(p => {
-        const key = p.name;
+        const key = (p.name || '').trim();
+        if (!key) return;
         if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
+        const cost = window.getCostUZS(p, rates);
         summary[key].warehouse += (p.qty || 0);
-        summary[key].warehouseSum += (p.qty || 0) * (window.getCostUZS(p, rates));
+        summary[key].warehouseSum += (p.qty || 0) * cost;
     });
 
     // 2. Учет товаров в магазине (по себестоимости)
     (window.shopProducts || []).forEach(s => {
-        const key = s.name;
+        const key = (s.name || '').trim();
+        if (!key) return;
         if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
+        const cost = window.getCostUZS(s, rates);
         summary[key].shop += (s.qty || 0);
-        summary[key].shopSum += (s.qty || 0) * (window.getCostUZS(s, rates));
+        summary[key].shopSum += (s.qty || 0) * cost;
     });
 
     // 3. Учет проданных товаров
@@ -273,25 +277,29 @@ export function printProductsReport() {
 // Вспомогательная функция для сбора данных
 function getSummaryData() {
     const summary = {};
+    const rates = window.fetchRates();
     (window.products || []).forEach(p => {
-        const key = p.name;
+        const key = (p.name || '').trim();
+        if (!key) return;
         if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
         summary[key].warehouse += (p.qty || 0);
-        summary[key].warehouseSum += (p.qty || 0) * (p.costUZS || 0);
+        summary[key].warehouseSum += (p.qty || 0) * window.getCostUZS(p, rates);
     });
     (window.shopProducts || []).forEach(s => {
-        const key = s.name;
+        const key = (s.name || '').trim();
+        if (!key) return;
         if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
         summary[key].shop += (s.qty || 0);
-        summary[key].shopSum += (s.qty || 0) * (s.costUZS || 0);
+        summary[key].shopSum += (s.qty || 0) * window.getCostUZS(s, rates);
     });
     (window.sales || []).forEach(sale => {
         (sale.items || []).forEach(item => {
-            const key = item.name;
+            const key = (item.name || '').trim();
+            if (!key) return;
             if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
             summary[key].sold += (item.cartQty || 0);
             summary[key].soldSum += (item.cartQty || 0) * (item.priceUZS || 0);
-            summary[key].soldCostSum += (item.cartQty || 0) * (window.getCostUZS(item, rates));
+            summary[key].soldCostSum += (item.cartQty || 0) * window.getCostUZS(item, rates);
         });
     });
     return summary;
