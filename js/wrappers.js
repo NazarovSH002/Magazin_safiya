@@ -10,7 +10,7 @@ async function callModuleFn(moduleName, fnName, ...args) {
 }
 
 // Stock module wrappers
-window.calculateTarget = () => callModuleFn('stock', 'calculateTarget');
+window.calculateTarget = (source) => callModuleFn('stock', 'calculateTarget', source);
 window.addOrUpdateProduct = () => callModuleFn('stock', 'addOrUpdateProduct');
 window.clearStockForm = () => callModuleFn('stock', 'clearStockForm');
 window.toggleAllCheckboxes = (checked) => callModuleFn('stock', 'toggleAllCheckboxes', checked);
