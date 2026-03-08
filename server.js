@@ -160,6 +160,12 @@ app.get('/api/load', async (req, res) => {
 // Сохранение данных
 app.post('/api/save', async (req, res) => {
     try {
+        // 🛡️ ВАЛИДАЦИЯ: Не сохраняем, если тело запроса пустое или не содержит ключей
+        if (!req.body || Object.keys(req.body).length === 0) {
+            console.warn('⚠️  ПРЕДУПРЕЖДЕНИЕ: Попытка сохранения пустых данных заблокирована.');
+            return res.status(400).json({ error: 'Пустой запрос на сохранение' });
+        }
+
         if (isUsingMongoDB) {
             // ✅ MongoDB подключена - сохраняем в облако
             const operations = Object.entries(req.body).map(([key, value]) => ({
@@ -183,6 +189,8 @@ app.post('/api/save', async (req, res) => {
             });
         } else {
             // ✅ MongoDB не настроена - работаем в автономном режиме
+            // Дополнительная проверка на критические данные (например, products не должен быть пустым если он был раньше)
+            // Но в этой реализации мы просто сохраняем то что пришло.
             Object.entries(req.body).forEach(([key, value]) => {
                 writeLocalData(key, value);
             });
@@ -317,7 +325,7 @@ app.post('/api/users', async (req, res) => {
         } else {
             const users = readLocalData('users');
             if (users.find(u => u.username === username)) return res.status(400).json({ success: false, error: 'Логин занят' });
-            const newUser = { _id: Date.now().toString(), name: name || username, username, password, role: role || 'seller' };
+            const newUser = { _id: Date.now().toString() + Math.floor(Math.random() * 1000).toString(), name: name || username, username, password, role: role || 'seller' };
             users.push(newUser);
             writeLocalData('users', users);
             const { password: pw, ...safeUser } = newUser;

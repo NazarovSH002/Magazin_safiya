@@ -24,6 +24,7 @@ export function renderDebts() {
             <td>
                 <div class="actions-cell">
                     <button class="btn btn-success btn-sm" onclick="HistoryModule.settleDebt(${idx})">Погасить</button>
+                    <button class="btn-icon-danger" onclick="HistoryModule.deleteHistory(${d.id})" title="Удалить">×</button>
                 </div>
             </td>
         `;
@@ -146,6 +147,7 @@ export function renderInstallments() {
             <td>
                 <div class="actions-cell">
                     <button class="btn btn-primary btn-sm" onclick="HistoryModule.payInstallment(${idx})">Внести платеж</button>
+                    <button class="btn-icon-danger" onclick="HistoryModule.deleteHistory(${ins.id})" title="Удалить">×</button>
                 </div>
             </td>
         `;
@@ -193,10 +195,13 @@ export function renderHistory() {
     const start = document.getElementById('historyStart')?.value;
     const end = document.getElementById('historyEnd')?.value;
     const actionFilter = document.getElementById('actionTypeFilter')?.value || 'all';
+    const typeFilter = document.getElementById('historyTypeFilter')?.value || 'all';
+    const search = (document.getElementById('historySearch')?.value || '').toLowerCase();
 
     const tbody = document.getElementById('history-tbody');
     const titleEl = document.getElementById('historyTitle');
     const actionFilterContainer = document.getElementById('actionFilterContainer');
+    const salesFilterContainer = document.getElementById('salesFilterContainer');
 
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -204,6 +209,7 @@ export function renderHistory() {
     if (mode === 'actions') {
         if (titleEl) titleEl.innerText = '📜 История действий (Логи)';
         if (actionFilterContainer) actionFilterContainer.style.display = 'block';
+        if (salesFilterContainer) salesFilterContainer.style.display = 'none';
 
         let actions = window.actions || [];
 
@@ -213,6 +219,14 @@ export function renderHistory() {
 
         // Фильтр по типу
         if (actionFilter !== 'all') actions = actions.filter(a => a.type === actionFilter);
+
+        // Поиск по описанию или пользователю
+        if (search) {
+            actions = actions.filter(a => 
+                (a.description || '').toLowerCase().includes(search) || 
+                (a.user || '').toLowerCase().includes(search)
+            );
+        }
 
         actions.slice().reverse().forEach(a => {
             const tr = document.createElement('tr');
@@ -229,6 +243,7 @@ export function renderHistory() {
     } else {
         if (titleEl) titleEl.innerText = '💰 История продаж';
         if (actionFilterContainer) actionFilterContainer.style.display = 'none';
+        if (salesFilterContainer) salesFilterContainer.style.display = 'block';
 
         let sales = window.sales || [];
 
@@ -242,6 +257,23 @@ export function renderHistory() {
         if (end) {
             const endTime = new Date(end).setHours(23, 59, 59, 999);
             sales = sales.filter(s => s.timestamp ? s.timestamp <= endTime : true);
+        }
+
+        // Фильтр по типу продажи
+        if (typeFilter !== 'all') {
+            sales = sales.filter(s => s.type === typeFilter);
+        }
+
+        // Поиск по клиенту или товару
+        if (search) {
+            sales = sales.filter(s => {
+                const customerMatch = (s.customer || '').toLowerCase().includes(search);
+                const itemsMatch = Array.isArray(s.items) 
+                    ? s.items.some(item => (item.name || '').toLowerCase().includes(search))
+                    : (s.items || '').toLowerCase().includes(search);
+                const commentMatch = (s.comment || '').toLowerCase().includes(search);
+                return customerMatch || itemsMatch || commentMatch;
+            });
         }
 
         sales.forEach(s => {
@@ -268,7 +300,6 @@ export function renderHistory() {
                 <td>
                     <div class="actions-cell" style="justify-content: flex-end;">
                         <button class="btn btn-primary btn-sm" onclick="HistoryModule.printReceipt(${s.id})" title="Печать чека">🖨️</button>
-                        <button class="btn-icon-danger" onclick="HistoryModule.deleteHistory(${s.id})" title="Удалить">×</button>
                     </div>
                 </td>
             `;
@@ -280,9 +311,13 @@ export function renderHistory() {
                 detailTr.id = `details-${s.id}`;
                 detailTr.className = 'details-row';
                 let itemsHtml = s.items.map(item => `
-                    <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #333; font-size:13px;">
-                        <span>${item.name} x ${item.cartQty}</span>
-                        <span>${format(item.priceUZS)} x ${item.cartQty} = ${format(item.priceUZS * item.cartQty)} сум</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #333; font-size:13px;">
+                        <div>
+                            <span>${item.name} x ${item.cartQty}</span><br>
+                            <small style="color:var(--text-muted)">${format(item.priceUZS)} x ${item.cartQty} = ${format(item.priceUZS * item.cartQty)} сум</small>
+                        </div>
+                        <button class="btn btn-danger btn-sm" style="padding: 2px 8px; font-size: 11px;" 
+                                onclick="HistoryModule.returnItem(${s.id}, ${item.id})">↩ Возврат</button>
                     </div>
                 `).join('');
 
@@ -414,30 +449,150 @@ export function printReceipt(id) {
     printSection.style.display = 'none';
 }
 
+export async function returnItem(saleId, itemId) {
+    const saleIdx = window.sales.findIndex(s => s.id === saleId);
+    if (saleIdx === -1) return;
+    const sale = window.sales[saleIdx];
+    
+    const itemIdx = sale.items.findIndex(i => i.id === itemId);
+    if (itemIdx === -1) return;
+    const item = sale.items[itemIdx];
+
+    const amountStr = prompt(`Укажите количество для возврата (доступно: ${item.cartQty}):`, item.cartQty);
+    const qtyToReturn = parseInt(amountStr);
+
+    if (isNaN(qtyToReturn) || qtyToReturn <= 0 || qtyToReturn > item.cartQty) {
+        return alert("Некорректное количество для возврата!");
+    }
+
+    if (!confirm(`Вернуть ${qtyToReturn} шт. товара "${item.name}" в магазин и обновить чек?`)) return;
+
+    // 1. Возвращаем товар в магазин (shopProducts)
+    // Ищем товар с таким же stockId и ценой продажи (для точности партий)
+    let shopItem = window.shopProducts.find(s => s.stockId === item.stockId && s.priceUZS === item.priceUZS);
+    
+    if (shopItem) {
+        shopItem.qty += qtyToReturn;
+    } else {
+        // Если товара уже нет в магазине, создаем новую запись
+        window.shopProducts.push({
+            id: Date.now() + Math.random(),
+            stockId: item.stockId,
+            name: item.name,
+            qty: qtyToReturn,
+            priceCNY: item.priceCNY,
+            costUZS: item.costUZS,
+            priceUZS: item.priceUZS,
+            lastUpdate: new Date().toLocaleString()
+        });
+    }
+
+    // 2. Обновляем чек
+    const refundSum = qtyToReturn * item.priceUZS;
+    item.cartQty -= qtyToReturn;
+    sale.total -= refundSum;
+
+    // Если всё вернули, убираем позицию из чека
+    if (item.cartQty <= 0) {
+        sale.items.splice(itemIdx, 1);
+    }
+
+    // Если чек стал пустым, предложим удалить его совсем
+    if (sale.items.length === 0) {
+        if (confirm("Чек пуст. Удалить запись о продаже совсем?")) {
+            window.sales.splice(saleIdx, 1);
+        }
+    }
+
+    // 3. Если это долг или рассрочка, обновляем суммы там
+    if (sale.type === "ДОЛГ") {
+        const debt = window.debts.find(d => d.id === sale.id);
+        if (debt) {
+            debt.total -= refundSum;
+            debt.items = sale.items; // Синхронизируем состав
+            if (debt.total <= (debt.paid || 0)) {
+                window.debts = window.debts.filter(d => d.id !== sale.id);
+            }
+        }
+    } else if (sale.type === "РАССРОЧКА") {
+        const ins = window.installments.find(i => i.id === sale.id);
+        if (ins) {
+            ins.total -= refundSum;
+            ins.items = sale.items;
+            if (ins.total <= (ins.paid || 0)) {
+                window.installments = window.installments.filter(i => i.id !== sale.id);
+            }
+        }
+    }
+
+    window.logAction('return_item', `Возврат товара: ${item.name} (${qtyToReturn} шт.) из чека #${sale.id.toString().slice(-4)}`, { saleId, itemId, qtyToReturn });
+    
+    renderHistory();
+    // Также обновим другие вкладки если они открыты
+    if (document.getElementById('view-debts')?.classList.contains('active')) renderDebts();
+    if (document.getElementById('view-installments')?.classList.contains('active')) renderInstallments();
+    
+    if (window.saveAll) await window.saveAll();
+    alert("Возврат оформлен!");
+}
+
 export async function deleteHistory(id) {
     if (confirm("Удалить запись из истории? (Остатки не вернутся)")) {
+        // Удаляем из основной истории
         window.sales = window.sales.filter(s => s.id !== id);
+        
+        // Синхронизация: удаляем из долгов и рассрочек, если они там есть
+        window.debts = (window.debts || []).filter(d => d.id !== id);
+        window.installments = (window.installments || []).filter(i => i.id !== id);
+
         renderHistory();
+        
+        // Также обновим другие вкладки, если они активны
+        if (document.getElementById('view-debts')?.classList.contains('active')) renderDebts();
+        if (document.getElementById('view-installments')?.classList.contains('active')) renderInstallments();
+        if (document.getElementById('view-retail')?.classList.contains('active')) {
+            loadModule('trade').then(m => m && m.renderDailySales && m.renderDailySales());
+        }
+        if (document.getElementById('view-wholesale')?.classList.contains('active')) {
+            loadModule('trade').then(m => m && m.renderWholesaleDailySales && m.renderWholesaleDailySales());
+        }
+
         if (window.saveAll) await window.saveAll();
+        window.logAction('delete_history', `Запись истории #${id} удалена`);
     }
 }
 
 export function exportHistoryCSV() {
-    let csv = "\ufeffДата;Клиент;Сумма;Тип;Товары\n";
-    window.sales.forEach(s => {
-        let itemsStr = "";
-        if (Array.isArray(s.items)) {
-            itemsStr = s.items.map(i => `${i.name} (${i.cartQty}шт)`).join(', ');
-        } else {
-            itemsStr = s.items;
-        }
-        csv += `${s.date};${s.customer};${s.total};${s.type};"${itemsStr.replace(/"/g, '""')}"\n`;
-    });
+    const mode = document.getElementById('historyMode')?.value || 'sales';
+    let csv = "";
+    let filename = "";
+
+    if (mode === 'actions') {
+        csv = "\ufeffДата;Пользователь;Описание;Тип;Детали\n";
+        const actions = window.actions || [];
+        actions.forEach(a => {
+            csv += `${new Date(a.date).toLocaleString()};${a.user || 'Система'};"${a.description.replace(/"/g, '""')}";${a.type};"${JSON.stringify(a.details || {}).replace(/"/g, '""')}"\n`;
+        });
+        filename = `logs_${new Date().toLocaleDateString()}`;
+    } else {
+        csv = "\ufeffДата;Клиент;Сумма;Тип;Товары\n";
+        const sales = window.sales || [];
+        sales.forEach(s => {
+            let itemsStr = "";
+            if (Array.isArray(s.items)) {
+                itemsStr = s.items.map(i => `${i.name} (${i.cartQty}шт)`).join(', ');
+            } else {
+                itemsStr = s.items;
+            }
+            csv += `${s.date};${s.customer};${s.total};${s.type};"${itemsStr.replace(/"/g, '""')}"\n`;
+        });
+        filename = `history_${new Date().toLocaleDateString()}`;
+    }
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `history_${new Date().toLocaleDateString()}.csv`;
+    link.download = `${filename}.csv`;
     link.click();
 }
 

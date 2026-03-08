@@ -33,4 +33,26 @@
             </div>
         </div>
     </div>
+    
+    <!-- НИЗ: История оптовых продаж -->
+    <div class="card" style="margin-top: 20px;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+            <h3 style="font-size: 18px;">🚛 История оптовых продаж по датам</h3>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <button class="btn btn-primary btn-sm" onclick="TradeModule.renderWholesaleDailySales()">🔄 Обновить</button>
+                <span id="wholesale-day-total" style="font-weight: 700; color: var(--accent); font-size: 16px;">0 UZS</span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; min-height: 300px;">
+            <div id="wholesale-date-sidebar"
+                style="border-right: 1px solid var(--border); padding-right: 20px; max-height: 400px; overflow-y: auto;">
+                <!-- Даты для опта -->
+            </div>
+            <div id="wholesale-daily-sales" style="max-height: 400px; overflow-y: auto;">
+                <!-- Чеки для опта -->
+            </div>
+        </div>
+    </div>
 </div>

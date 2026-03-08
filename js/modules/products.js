@@ -14,7 +14,7 @@ export function renderProductsList() {
         const key = p.name;
         if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
         summary[key].warehouse += (p.qty || 0);
-        summary[key].warehouseSum += (p.qty || 0) * (p.costUZS || 0);
+        summary[key].warehouseSum += (p.qty || 0) * (window.getCostUZS(p, rates));
     });
 
     // 2. Учет товаров в магазине (по себестоимости)
@@ -22,7 +22,7 @@ export function renderProductsList() {
         const key = s.name;
         if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
         summary[key].shop += (s.qty || 0);
-        summary[key].shopSum += (s.qty || 0) * (s.costUZS || 0);
+        summary[key].shopSum += (s.qty || 0) * (window.getCostUZS(s, rates));
     });
 
     // 3. Учет проданных товаров
@@ -36,7 +36,7 @@ export function renderProductsList() {
             summary[key].soldSum += (item.cartQty || 0) * (item.priceUZS || 0);
 
             // Себестоимость проданного (для блока "Итого было")
-            const itemCost = item.costUZS || 0;
+            const itemCost = window.getCostUZS(item, rates);
             summary[key].soldCostSum += (item.cartQty || 0) * itemCost;
         });
     });
@@ -58,7 +58,9 @@ export function renderProductsList() {
         .filter(key => key.toLowerCase().includes(query))
         .sort((a, b) => a.localeCompare(b));
 
-    sortedKeys.forEach(name => {
+    const toRender = sortedKeys.slice(0, 100);
+
+    toRender.forEach(name => {
         const entry = summary[name];
         const totalWasQty = entry.warehouse + entry.shop + entry.sold;
 
@@ -116,6 +118,16 @@ export function renderProductsList() {
         `;
         grid.appendChild(card);
     });
+
+    if (sortedKeys.length > 100) {
+        const info = document.createElement('div');
+        info.style.gridColumn = '1/-1';
+        info.style.textAlign = 'center';
+        info.style.padding = '20px';
+        info.style.color = 'var(--text-muted)';
+        info.innerText = `Показано 100 из ${sortedKeys.length} товаров. Используйте поиск для фильтрации.`;
+        grid.appendChild(info);
+    }
 
     // Обновление стат-карточек
     if (document.getElementById('stats-total-names')) document.getElementById('stats-total-names').innerText = totalNames;
@@ -279,7 +291,7 @@ function getSummaryData() {
             if (!summary[key]) summary[key] = { warehouse: 0, shop: 0, sold: 0, warehouseSum: 0, shopSum: 0, soldSum: 0, soldCostSum: 0 };
             summary[key].sold += (item.cartQty || 0);
             summary[key].soldSum += (item.cartQty || 0) * (item.priceUZS || 0);
-            summary[key].soldCostSum += (item.cartQty || 0) * (item.costUZS || 0);
+            summary[key].soldCostSum += (item.cartQty || 0) * (window.getCostUZS(item, rates));
         });
     });
     return summary;

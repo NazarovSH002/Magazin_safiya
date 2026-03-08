@@ -347,7 +347,10 @@ async function switchTab(viewId) {
 
     if (viewId === 'wholesale') {
         const m = await loadModule('trade');
-        if (m && m.renderWholesaleList) m.renderWholesaleList();
+        if (m) {
+            if (m.renderWholesaleList) m.renderWholesaleList();
+            if (m.renderWholesaleDailySales) m.renderWholesaleDailySales();
+        }
     }
 
     if (viewId === 'debts') {

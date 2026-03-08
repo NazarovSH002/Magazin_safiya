@@ -33,45 +33,28 @@ export function addOrUpdateProduct() {
         const idx = window.products.findIndex(p => p.id === window.editingId);
         if (idx !== -1) {
             window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, costUZS, priceUZS: uzs, date: pDate };
+            
+            // СИНХРОНИЗАЦИЯ: Обновляем те же товары в магазине
+            if (window.shopProducts) {
+                window.shopProducts.forEach(s => {
+                    if (s.stockId === window.editingId) {
+                        s.name = name;
+                        s.priceCNY = cny;
+                        s.costUZS = costUZS;
+                        s.priceUZS = uzs;
+                    }
+                });
+            }
+            
             window.logAction('edit_product', `Изменен товар: ${name}`, { id: window.editingId, qty, uzs });
         }
         window.editingId = null;
     } else {
-        // Проверяем, есть ли уже такой товар с ТАКОЙ ЖЕ ценой
-        const existing = window.products.find(p => p.name.toLowerCase() === name.toLowerCase() && p.priceUZS === uzs);
-
-        if (existing) {
-            // Если нашли совпадение по имени и цене - просто прибавляем кол-во
-            if (toShopEl && toShopEl.checked) {
-                // Если стоит галочка "сразу в магазин"
-                const shopItem = window.shopProducts.find(s => s.stockId === existing.id);
-                if (shopItem) {
-                    shopItem.qty += qty;
-                    shopItem.lastUpdate = pDate;
-                } else {
-                    window.shopProducts.push({
-                        id: Date.now(),
-                        stockId: existing.id,
-                        name: name,
-                        qty: qty,
-                        priceCNY: cny,
-                        costUZS: costUZS,
-                        priceUZS: uzs,
-                        lastUpdate: pDate
-                    });
-                }
-                // На складе оставляем без изменений (обычно там будет 0, если товар уже был перемещен)
-            } else {
-                existing.qty += qty;
-            }
-            window.logAction('add_product', `Объединен товар: ${name} (цена совпала)`, { id: existing.id, addedQty: qty });
-        } else {
-            createNewEntry();
-        }
+        createNewEntry();
     }
 
     function createNewEntry() {
-        const newId = Date.now();
+        const newId = Date.now() + Math.floor(Math.random() * 1000);
         const newProduct = {
             id: newId,
             name,
@@ -85,7 +68,7 @@ export function addOrUpdateProduct() {
         window.logAction('add_product', `Добавлен товар на склад: ${name}`, { id: newId, qty, uzs, date: pDate });
 
         if (toShopEl && toShopEl.checked) {
-            const shopId = Date.now() + 1;
+            const shopId = Date.now() + Math.floor(Math.random() * 1000);
             window.shopProducts.push({
                 id: shopId,
                 stockId: newId,
@@ -133,7 +116,10 @@ export function renderStock() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    window.products.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
+    const filtered = window.products.filter(p => p.name.toLowerCase().includes(query));
+    const toRender = filtered.slice(0, 100); // Ограничиваем рендеринг для скорости
+
+    toRender.forEach(p => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td data-label="Выбор"><input type="checkbox" class="stock-check" value="${p.id}" onclick="window.StockModule.updateSelectedCount()"></td>
@@ -143,7 +129,7 @@ export function renderStock() {
             </td>
             <td data-label="Кол-во">${p.qty}</td>
             <td data-label="Закуп" style="color:var(--text-muted)">${p.priceCNY} ¥</td>
-            <td data-label="Себестоимость" style="font-weight:600">${window.format(p.costUZS || 0)}</td>
+            <td data-label="Себестоимость" style="font-weight:600">${window.format(window.getCostUZS(p, window.fetchRates()))}</td>
             <td data-label="Действие">
                 <div class="actions-cell">
                     <button class="btn btn-primary btn-sm" onclick="window.StockModule.transferToShop(${p.id})">В магазин</button>
@@ -154,6 +140,13 @@ export function renderStock() {
         `;
         tbody.appendChild(tr);
     });
+
+    if (filtered.length > 100) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Показано первые 100 из ${filtered.length} товаров. Используйте поиск для уточнения.</td>`;
+        tbody.appendChild(tr);
+    }
+
     updateSelectedCount();
 }
 
@@ -176,7 +169,7 @@ export function transferToShop(id) {
         shopItem.lastUpdate = new Date().toLocaleString();
     } else {
         window.shopProducts.push({
-            id: Date.now(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
             stockId: p.id,
             name: p.name,
             qty: qtyToMove,
@@ -328,8 +321,18 @@ export function importCSV(event) {
                 const name = cols[0].replace(/"/g, '').trim();
                 const qty = parseInt(cols[1]) || 0;
                 const cny = parseFloat(cols[2]) || 0;
-                const uzs = (cols.length >= 4 && cols[3].trim() !== "") ? parseInt(cols[3]) : Math.round((cny / rates.cny) * rates.uzs);
-                window.products.push({ id: Date.now() + Math.random(), name, qty, priceCNY: cny, priceUZS: uzs, date: new Date().toLocaleString() });
+                const costUZS = Math.round((cny / rates.cny) * rates.uzs);
+                const uzs = (cols.length >= 4 && cols[3].trim() !== "") ? parseInt(cols[3]) : costUZS;
+                
+                window.products.push({ 
+                    id: Date.now() + Math.floor(Math.random() * 1000000), 
+                    name, 
+                    qty, 
+                    priceCNY: cny, 
+                    costUZS: costUZS,
+                    priceUZS: uzs, 
+                    date: new Date().toLocaleString() 
+                });
             }
         });
         renderStock();

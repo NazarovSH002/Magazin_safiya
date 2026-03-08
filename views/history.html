@@ -29,7 +29,25 @@
                     <option value="login">Входы</option>
                 </select>
             </div>
-            <button class="btn btn-outline" onclick="exportHistoryCSV()" style="margin-left: auto;">Excel (CSV)</button>
+            <div id="salesFilterContainer" class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 12px; color: var(--text-muted);">Тип продажи</label>
+                <select id="historyTypeFilter" onchange="window.HistoryModule.renderHistory()"
+                    style="background: var(--bg-input); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px;">
+                    <option value="all">Все</option>
+                    <option value="РОЗНИЦА">Розница</option>
+                    <option value="ОПТ">Оптом</option>
+                    <option value="ДОЛГ">Долги</option>
+                    <option value="РАССРОЧКА">Рассрочка</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                <label style="font-size: 12px; color: var(--text-muted);">Поиск (имя или товар)</label>
+                <input type="text" id="historySearch" placeholder="Поиск по клиенту или товару..." 
+                    oninput="window.HistoryModule.renderHistory()" 
+                    style="background: var(--bg-input); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; width: 100%;">
+            </div>
+            <button class="btn btn-outline" onclick="window.HistoryModule.exportHistoryCSV()"
+                style="margin-left: auto;">Excel (CSV)</button>
         </div>
     </div>
 

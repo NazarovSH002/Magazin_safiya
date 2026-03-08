@@ -9,7 +9,10 @@ export function renderRetailList() {
     // shopProducts берется из глобальной области (window)
     const products = window.shopProducts || [];
 
-    products.filter(p => p.name.toLowerCase().includes(query) && p.qty > 0).forEach(p => {
+    const filtered = (window.shopProducts || []).filter(p => p.name.toLowerCase().includes(query) && p.qty > 0);
+    const toRender = filtered.slice(0, 50);
+
+    toRender.forEach(p => {
         const div = document.createElement('div');
         div.className = 'card';
         div.style.padding = '10px';
@@ -22,6 +25,17 @@ export function renderRetailList() {
         `;
         list.appendChild(div);
     });
+
+    if (filtered.length > 50) {
+        const div = document.createElement('div');
+        div.style.gridColumn = '1 / -1';
+        div.style.textAlign = 'center';
+        div.style.padding = '10px';
+        div.style.color = 'var(--text-muted)';
+        div.style.fontSize = '12px';
+        div.innerText = `Показано 50 из ${filtered.length}. Уточните поиск.`;
+        list.appendChild(div);
+    }
 }
 
 export function renderWholesaleList() {
@@ -32,7 +46,10 @@ export function renderWholesaleList() {
 
     const products = window.shopProducts || [];
 
-    products.filter(p => p.name.toLowerCase().includes(query) && p.qty > 0).forEach(p => {
+    const filtered = (window.shopProducts || []).filter(p => p.name.toLowerCase().includes(query) && p.qty > 0);
+    const toRender = filtered.slice(0, 50);
+
+    toRender.forEach(p => {
         const div = document.createElement('div');
         div.className = 'card';
         div.style.padding = '10px';
@@ -45,6 +62,17 @@ export function renderWholesaleList() {
         `;
         list.appendChild(div);
     });
+
+    if (filtered.length > 50) {
+        const div = document.createElement('div');
+        div.style.gridColumn = '1 / -1';
+        div.style.textAlign = 'center';
+        div.style.padding = '10px';
+        div.style.color = 'var(--text-muted)';
+        div.style.fontSize = '12px';
+        div.innerText = `Показано 50 из ${filtered.length}. Уточните поиск.`;
+        list.appendChild(div);
+    }
     if (document.getElementById('wholesaleDate') && !document.getElementById('wholesaleDate').value) {
         document.getElementById('wholesaleDate').value = new Date().toISOString().split('T')[0];
     }
@@ -142,11 +170,11 @@ export async function completeSale(type, isDebt, debtType = 'debt') {
     }
 
     const saleData = {
-        id: Date.now(),
+        id: Date.now() + Math.floor(Math.random() * 1000),
         timestamp: saleDate.getTime(),
         date: saleDate.toLocaleString(),
         customer,
-        items: [...cart],
+        items: cart.map(item => ({...item})), // Клонируем для истории
         total,
         comment,
         type: isDebt ? (debtType === 'installment' ? "РАССРОЧКА" : "ДОЛГ") : (type === 'retail' ? "РОЗНИЦА" : "ОПТ")
@@ -180,6 +208,7 @@ export async function completeSale(type, isDebt, debtType = 'debt') {
         if (document.getElementById('wholesaleCustomer')) document.getElementById('wholesaleCustomer').value = '';
         if (document.getElementById('wholesaleComment')) document.getElementById('wholesaleComment').value = '';
         renderWholesaleList();
+        renderWholesaleDailySales();
     }
 
     renderCart(type);
@@ -242,7 +271,10 @@ export function renderDailySales() {
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:700; color:var(--success); font-size:15px;">${window.format(s.total)}</div>
-                    <button class="btn-sm" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:11px; text-decoration:underline; padding:0;">детали</button>
+                    <div style="display:flex; gap:8px; justify-content: flex-end; margin-top:5px;">
+                        <button class="btn-sm" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:11px; text-decoration:underline; padding:0;" onclick="TradeModule.toggleDetails(${s.id})">детали</button>
+                        <button class="btn-icon-danger" style="padding:2px 5px; font-size:10px;" onclick="HistoryModule.deleteHistory(${s.id}); TradeModule.renderDailySales();" title="Удалить продажу">×</button>
+                    </div>
                 </div>
             </div>
             <div id="details-${s.id}" style="display:none; padding:12px; background:rgba(255,255,255,0.03); border-radius:0 0 10px 10px; margin-top:-5px; border:1px solid var(--border); border-top:none;">
@@ -267,6 +299,90 @@ export function toggleDetails(id) {
         const isHidden = el.style.display === 'none';
         el.style.display = isHidden ? 'block' : 'none';
     }
+}
+
+export function renderWholesaleDailySales() {
+    const dailyList = document.getElementById('wholesale-daily-sales');
+    const dayTotalEl = document.getElementById('wholesale-day-total');
+    const dateSidebar = document.getElementById('wholesale-date-sidebar');
+    const dateInput = document.getElementById('wholesaleDate');
+
+    if (!dailyList || !dateSidebar) return;
+
+    // Берем только оптовые продажи
+    const wholesaleSales = window.sales.filter(s => s.type === "ОПТ");
+    const uniqueDates = [...new Set(wholesaleSales.map(s => s.date.split(',')[0]))]
+        .sort((a, b) => {
+            const dateA = new Date(a.split('.').reverse().join('-'));
+            const dateB = new Date(b.split('.').reverse().join('-'));
+            return dateB - dateA;
+        });
+
+    // Определяем дату для фильтрации
+    let filterDateStr = "";
+    if (dateInput && dateInput.value) {
+        filterDateStr = new Date(dateInput.value).toLocaleDateString();
+    } else if (uniqueDates.length > 0) {
+        filterDateStr = uniqueDates[0];
+    } else {
+        filterDateStr = new Date().toLocaleDateString();
+    }
+
+    dateSidebar.innerHTML = uniqueDates.map(dateStr => {
+        const isActive = dateStr === filterDateStr;
+        return `
+            <div style="padding: 10px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; font-size: 14px; transition: all 0.2s; 
+                        background: ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; 
+                        color: ${isActive ? 'white' : 'var(--text)'};"
+                 onclick="TradeModule.selectWholesaleDate('${dateStr}')">
+                📅 ${dateStr}
+            </div>
+        `;
+    }).join('') || '<div style="color:var(--text-muted); font-size: 12px;">Нет истории</div>';
+
+    const daySales = wholesaleSales.filter(s => s.date.includes(filterDateStr));
+    const dayTotal = daySales.reduce((sum, s) => sum + s.total, 0);
+
+    if (dayTotalEl) dayTotalEl.innerText = window.format(dayTotal) + " UZS";
+
+    dailyList.innerHTML = daySales.map(s => {
+        const itemsList = s.items.map(i => `
+            <div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span>${i.name} x ${i.cartQty}</span>
+                <span>${window.format(i.priceUZS * i.cartQty)} сум</span>
+            </div>
+        `).join('');
+
+        return `
+        <div style="margin-bottom:10px;">
+            <div style="padding:12px; border:1px solid var(--border); background:rgba(255,255,255,0.02); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div onclick="TradeModule.toggleDetails(${s.id})" style="cursor:pointer; flex: 1;">
+                    <div style="font-weight:600; font-size:14px; margin-bottom:2px;">${s.customer} (Чек #${s.id.toString().slice(-4)})</div>
+                    <div style="font-size:11px; color:var(--text-muted);">${s.date.split(',')[1] || ''} • ${s.items.length} поз.</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:700; color:var(--accent); font-size:15px;">${window.format(s.total)}</div>
+                    <div style="display:flex; gap:8px; justify-content: flex-end; margin-top:5px;">
+                        <button class="btn-sm" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:11px; text-decoration:underline; padding:0;" onclick="TradeModule.toggleDetails(${s.id})">детали</button>
+                        <button class="btn-icon-danger" style="padding:2px 5px; font-size:10px;" onclick="HistoryModule.deleteHistory(${s.id}); TradeModule.renderWholesaleDailySales();" title="Удалить продажу">×</button>
+                    </div>
+                </div>
+            </div>
+            <div id="details-${s.id}" style="display:none; padding:12px; background:rgba(255,255,255,0.03); border-radius:0 0 10px 10px; margin-top:-5px; border:1px solid var(--border); border-top:none;">
+                <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; font-weight:700;">Состав чека:</div>
+                ${itemsList}
+                ${s.comment ? `<div style="font-size:11px; color:var(--accent); margin-top:8px;">💬 ${s.comment}</div>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('') || '<div style="color:var(--text-muted); text-align:center; padding:40px;">За этот день оптовых продаж не найдено</div>';
+}
+
+export function selectWholesaleDate(dateStr) {
+    const [d, m, y] = dateStr.split('.');
+    const input = document.getElementById('wholesaleDate');
+    if (input) input.value = `${y}-${m}-${d}`;
+    renderWholesaleDailySales();
 }
 
 export function init() {
