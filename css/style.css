@@ -389,6 +389,26 @@ tr:hover td {
     margin-bottom: 20px;
 }
 
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.form-group input:not([type="checkbox"]),
+.form-group select {
+    width: 100%;
+}
+
+/* Исключение для меток чекбоксов и элементов во флексе */
+.form-group[style*="flex"] label,
+.form-group input[type="checkbox"] + label {
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
 .search-box {
     margin-bottom: 20px;
     position: relative;

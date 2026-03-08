@@ -18,24 +18,25 @@
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
-                    <label style="font-size: 12px; color: var(--text-muted);">Закуп (¥)</label>
+                    <label style="color: var(--text-muted);">Закуп (¥)</label>
                     <input type="number" id="pPriceCNY" value="0.0" oninput="calculateTarget('cny')">
                 </div>
                 <div class="form-group">
-                    <label style="font-size: 12px; color: var(--text-muted);">Закуп ($)</label>
+                    <label style="color: var(--text-muted);">Закуп ($)</label>
                     <input type="number" id="pPriceUSD" value="0.0" oninput="calculateTarget('usd')">
                 </div>
             </div>
-            <div class="form-group">
-                <label style="font-size: 12px; color: var(--text-muted);">Себестоимость (UZS)</label>
-                <input type="number" id="pCostUZS" value="0" placeholder="Автоматически рассчитается">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label style="color: var(--text-muted);">Себестоимость (UZS)</label>
+                    <input type="number" id="pCostUZS" value="0" placeholder="Автоматически">
+                </div>
+                <div class="form-group">
+                    <label style="color: var(--text-muted);">Дата поступления</label>
+                    <input type="date" id="pDate">
+                </div>
             </div>
-            <!-- Скрытое поле для совместимости -->
             <input type="hidden" id="pPriceUZS" value="0">
-            <div class="form-group">
-                <label style="font-size: 12px; color: var(--text-muted);">Дата поступления</label>
-                <input type="date" id="pDate">
-            </div>
             <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
                 <input type="checkbox" id="pToShop" style="width: auto;">
                 <label for="pToShop" style="font-size: 13px; cursor: pointer;">Добавить сразу в магазин</label>
