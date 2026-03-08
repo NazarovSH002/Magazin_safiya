@@ -106,15 +106,19 @@ async function loadAll() {
 
 // --- ИНИЦИАЛИЗАЦИЯ КУРСОВ ---
 function initRates(rates) {
-    const savedRates = rates || JSON.parse(localStorage.getItem('pro_rates')) || { cny: 7.2, uzs: 12850 };
+    const savedRates = rates || JSON.parse(localStorage.getItem('pro_rates')) || { cny: 7.2, uzs: 12850, usd: 12850 };
     document.getElementById('rateCNY').value = savedRates.cny;
     document.getElementById('rateUZS').value = savedRates.uzs;
+    if (document.getElementById('rateUSD')) {
+        document.getElementById('rateUSD').value = savedRates.usd || 12850;
+    }
 }
 
 function saveRates() {
     const data = {
         cny: parseFloat(document.getElementById('rateCNY').value) || 1,
-        uzs: parseFloat(document.getElementById('rateUZS').value) || 0
+        uzs: parseFloat(document.getElementById('rateUZS').value) || 0,
+        usd: parseFloat(document.getElementById('rateUSD').value) || 0
     };
     localStorage.setItem('pro_rates', JSON.stringify(data));
     saveAll(); // Также сохраняем на сервер
@@ -147,7 +151,8 @@ async function saveAll() {
         actions: window.actions,
         rates: {
             cny: parseFloat(document.getElementById('rateCNY').value) || 1,
-            uzs: parseFloat(document.getElementById('rateUZS').value) || 0
+            uzs: parseFloat(document.getElementById('rateUZS').value) || 0,
+            usd: parseFloat(document.getElementById('rateUSD')?.value) || 0
         }
     };
 
@@ -409,7 +414,11 @@ function getCostUZS(item, rates) {
     if (item.costUZS && item.costUZS > 0) {
         return item.costUZS;
     }
-    // Если есть priceCNY, считаем через курс
+    // Если есть priceUSD, считаем через курс доллара
+    if (item.priceUSD && item.priceUSD > 0) {
+        return item.priceUSD * (rates.usd || 12850);
+    }
+    // Если есть priceCNY, считаем через курс юаня
     if (item.priceCNY && item.priceCNY > 0) {
         return (item.priceCNY / rates.cny) * rates.uzs;
     }
@@ -419,8 +428,9 @@ function getCostUZS(item, rates) {
 
 function fetchRates() {
     return {
-        cny: parseFloat(document.getElementById('rateCNY').value) || 1,
-        uzs: parseFloat(document.getElementById('rateUZS').value) || 0
+        cny: parseFloat(document.getElementById('rateCNY')?.value) || 1,
+        uzs: parseFloat(document.getElementById('rateUZS')?.value) || 0,
+        usd: parseFloat(document.getElementById('rateUSD')?.value) || 12850
     };
 }
 

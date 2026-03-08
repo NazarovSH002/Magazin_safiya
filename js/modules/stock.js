@@ -1,9 +1,19 @@
 // === МОДУЛЬ: СКЛАД И МАГАЗИН ===
 
-export function calculateTarget() {
-    const val = parseFloat(document.getElementById('pPriceCNY').value) || 0;
+export function calculateTarget(source = 'cny') {
+    const cnyVal = parseFloat(document.getElementById('pPriceCNY').value) || 0;
+    const usdVal = parseFloat(document.getElementById('pPriceUSD').value) || 0;
     const rates = window.fetchRates();
-    const costUZS = Math.round((val / rates.cny) * rates.uzs);
+    
+    let costUZS = 0;
+    if (source === 'usd' && usdVal > 0) {
+        costUZS = Math.round(usdVal * rates.usd);
+        document.getElementById('pPriceCNY').value = 0;
+    } else if (cnyVal > 0) {
+        costUZS = Math.round((cnyVal / rates.cny) * rates.uzs);
+        document.getElementById('pPriceUSD').value = 0;
+    }
+    
     document.getElementById('pCostUZS').value = costUZS;
 }
 
@@ -21,6 +31,7 @@ export function addOrUpdateProduct() {
     const name = nameEl.value.trim();
     const qty = parseInt(qtyEl.value) || 0;
     const cny = parseFloat(cnyEl.value) || 0;
+    const usd = parseFloat(document.getElementById('pPriceUSD')?.value) || 0;
     const costUZS = parseInt(costEl.value) || 0;
     const uzs = parseInt(uzsEl.value) || 0;
     const pDate = dateEl.value || new Date().toISOString().split('T')[0];
@@ -32,7 +43,7 @@ export function addOrUpdateProduct() {
     if (window.editingId) {
         const idx = window.products.findIndex(p => p.id === window.editingId);
         if (idx !== -1) {
-            window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, costUZS, priceUZS: uzs, date: pDate };
+            window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, priceUSD: usd, costUZS, priceUZS: uzs, date: pDate };
             
             // СИНХРОНИЗАЦИЯ: Обновляем те же товары в магазине
             if (window.shopProducts) {
@@ -40,6 +51,7 @@ export function addOrUpdateProduct() {
                     if (s.stockId === window.editingId) {
                         s.name = name;
                         s.priceCNY = cny;
+                        s.priceUSD = usd;
                         s.costUZS = costUZS;
                         s.priceUZS = uzs;
                     }
@@ -60,6 +72,7 @@ export function addOrUpdateProduct() {
             name,
             qty,
             priceCNY: cny,
+            priceUSD: usd,
             costUZS: costUZS,
             priceUZS: uzs,
             date: pDate
@@ -75,6 +88,7 @@ export function addOrUpdateProduct() {
                 name: name,
                 qty: qty,
                 priceCNY: cny,
+                priceUSD: usd,
                 costUZS: costUZS,
                 priceUZS: uzs,
                 lastUpdate: pDate
@@ -98,6 +112,7 @@ export function clearStockForm() {
     document.getElementById('pName').value = '';
     document.getElementById('pQty').value = '';
     document.getElementById('pPriceCNY').value = '0.0';
+    if (document.getElementById('pPriceUSD')) document.getElementById('pPriceUSD').value = '0.0';
     document.getElementById('pCostUZS').value = '0';
     document.getElementById('pDate').value = new Date().toISOString().split('T')[0];
     if (document.getElementById('pToShop')) document.getElementById('pToShop').checked = false;
@@ -128,7 +143,7 @@ export function renderStock() {
                 <div style="font-size:10px; color:var(--text-muted);">${p.date || '-'}</div>
             </td>
             <td data-label="Кол-во">${p.qty}</td>
-            <td data-label="Закуп" style="color:var(--text-muted)">${p.priceCNY} ¥</td>
+            <td data-label="Закуп" style="color:var(--text-muted)">${p.priceUSD > 0 ? p.priceUSD + ' $' : p.priceCNY + ' ¥'}</td>
             <td data-label="Себестоимость" style="font-weight:600">${window.format(window.getCostUZS(p, window.fetchRates()))}</td>
             <td data-label="Действие">
                 <div class="actions-cell">
@@ -235,7 +250,8 @@ export function fillAsTemplate(id) {
     const p = window.products.find(p => p.id === id);
     if (!p) return;
     document.getElementById('pName').value = p.name;
-    document.getElementById('pPriceCNY').value = p.priceCNY;
+    document.getElementById('pPriceCNY').value = p.priceCNY || 0;
+    if (document.getElementById('pPriceUSD')) document.getElementById('pPriceUSD').value = p.priceUSD || 0;
     document.getElementById('pCostUZS').value = p.costUZS || 0;
     // Сбрасываем ID редактирования, чтобы это считалось новым добавлением
     window.editingId = null;
@@ -250,7 +266,8 @@ export function editProduct(id) {
     if (!p) return;
     document.getElementById('pName').value = p.name;
     document.getElementById('pQty').value = p.qty;
-    document.getElementById('pPriceCNY').value = p.priceCNY;
+    document.getElementById('pPriceCNY').value = p.priceCNY || 0;
+    if (document.getElementById('pPriceUSD')) document.getElementById('pPriceUSD').value = p.priceUSD || 0;
     document.getElementById('pCostUZS').value = p.costUZS || 0;
     document.getElementById('pDate').value = (p.date && p.date.includes('-')) ? p.date : new Date().toISOString().split('T')[0];
 
