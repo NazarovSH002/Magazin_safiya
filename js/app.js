@@ -275,8 +275,8 @@ function showApp() {
 
 function applyRoleLimits() {
     if (window.currentUser && window.currentUser.role === 'seller') {
-        // Скрываем вкладки для продавца
-        const forbiddenTabs = ['dashboard', 'stock', 'shop', 'history', 'debts', 'installments', 'users', 'products'];
+        // Скрываем вкладки для продавца (разрешены: розница, опт, рассрочка)
+        const forbiddenTabs = ['dashboard', 'stock', 'shop', 'debts', 'products', 'stats', 'history', 'users'];
         document.querySelectorAll('.tab').forEach(tab => {
             const onclick = tab.getAttribute('onclick') || '';
             if (forbiddenTabs.some(t => onclick.includes(`'${t}'`))) {
