@@ -233,6 +233,13 @@ function showMongoWarning(message) {
 
 // Запускаем загрузку при старте
 window.onload = () => {
+    // Применяем сохраненную тему
+    const savedTheme = localStorage.getItem('pro_theme') || 'dark';
+    if (document.getElementById('themeSelector')) {
+        document.getElementById('themeSelector').value = savedTheme;
+    }
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
     if (window.currentUser) {
         showApp();
         loadAll();
@@ -498,6 +505,14 @@ function logAction(type, description, details = {}) {
     window.saveAll();
 }
 
+// Установка темы
+function changeTheme() {
+    const theme = document.getElementById('themeSelector').value;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('pro_theme', theme);
+}
+
+window.changeTheme = changeTheme;
 window.logAction = logAction;
 window.format = format;
 window.formatMillion = formatMillion;

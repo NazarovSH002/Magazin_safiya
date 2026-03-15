@@ -178,11 +178,19 @@
     </div>
 
     <div class="container hidden" id="main-container">
-        <!-- Шапка с курсами -->
+        <!-- Шапка с курсами и темой -->
         <div class="top-bar">
             <h2 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Sofia <span
                     style="color: var(--accent);">Boutique</span></h2>
             <div class="rates-group">
+                <div class="rate-item">
+                    <span>🎨 Тема:</span>
+                    <select id="themeSelector" onchange="changeTheme()" style="padding: 6px; width: 110px; font-size: 12px; height: 32px;">
+                        <option value="dark">Темная</option>
+                        <option value="light">Светлая</option>
+                        <option value="forest">Лес</option>
+                    </select>
+                </div>
                 <div class="rate-item">
                     <span>🇨🇳 CNY:</span>
                     <input type="number" id="rateCNY" step="0.01" value="7.2" oninput="saveRates()">
