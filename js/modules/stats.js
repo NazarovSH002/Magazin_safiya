@@ -59,11 +59,11 @@ function calculateFinancials() {
     }
 
     const stats = {
-        day: { profit: 0, count: 0, revenue: 0, expense: 0 },
-        week: { profit: 0, count: 0, revenue: 0, expense: 0 },
-        month: { profit: 0, count: 0, revenue: 0, expense: 0 },
-        total: { profit: 0, count: 0, revenue: 0, expense: 0 },
-        period: { profit: 0, count: 0, revenue: 0, expense: 0 }
+        day: { profit: 0, count: 0, revenue: 0, expense: 0, investment: 0 },
+        week: { profit: 0, count: 0, revenue: 0, expense: 0, investment: 0 },
+        month: { profit: 0, count: 0, revenue: 0, expense: 0, investment: 0 },
+        total: { profit: 0, count: 0, revenue: 0, expense: 0, investment: 0 },
+        period: { profit: 0, count: 0, revenue: 0, expense: 0, investment: 0 }
     };
 
     sales.forEach(s => {
@@ -121,6 +121,18 @@ function calculateFinancials() {
         // Если это закупка товара, суммируем отдельно и НЕ вычитаем из прибыли
         if (ex.category === "Закупка товара") {
             totalInvested += ex.amount;
+            stats.total.investment += ex.amount;
+
+            if (exDate >= startOfDay) stats.day.investment += ex.amount;
+            if (exDate >= startOfWeek) stats.week.investment += ex.amount;
+            if (exDate >= startOfMonth) stats.month.investment += ex.amount;
+
+            let inPeriodInv = true;
+            if (startLimit && exDate < startLimit) inPeriodInv = false;
+            if (endLimit && exDate > endLimit) inPeriodInv = false;
+            if (inPeriodInv) {
+                stats.period.investment += ex.amount;
+            }
             return;
         }
 
@@ -166,11 +178,13 @@ function calculateFinancials() {
     if (document.getElementById('label-expense')) document.getElementById('label-expense').innerText = "Расход " + labelSuffix;
     if (document.getElementById('label-profit')) document.getElementById('label-profit').innerText = "Чистая прибыль " + labelSuffix;
     if (document.getElementById('label-count')) document.getElementById('label-count').innerText = "Кол-во продаж " + labelSuffix;
+    if (document.getElementById('label-investment')) document.getElementById('label-investment').innerText = "Закупка товара " + labelSuffix;
 
     updateEl('stats-daily-revenue', stats.period.revenue);
     updateEl('stats-daily-expense', stats.period.expense, '#ef4444');
     updateEl('stats-daily-profit', stats.period.profit, stats.period.profit >= 0 ? 'var(--success)' : '#ef4444');
     updateEl('stats-period-count', stats.period.count, '', true);
+    updateEl('stats-daily-investment', stats.period.investment, '#f59e0b');
 
     // Сводка
     const monthExpensesOnly = expenses.filter(ex =>
