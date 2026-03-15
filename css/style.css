@@ -49,24 +49,93 @@
 /* Тема "Лес" (Dark Green) */
 [data-theme="forest"] {
     --bg-main: #064e3b;
-    --bg-gradient: radial-gradient(circle at top right, #065f46, var(--bg-main));
-    --bg-card: #022c22;
-    --bg-input: #064e3b;
+    --bg-gradient: radial-gradient(circle at top right, #047857, var(--bg-main));
+    --bg-card: #064e3b;
+    --bg-input: #022c22;
     --border: rgba(255, 255, 255, 0.1);
     --text: #ecfdf5;
-    --text-muted: #6ee7b7;
+    --text-muted: #a7f3d0;
     --primary: linear-gradient(135deg, #10b981 0%, #059669 100%);
     --primary-hover: linear-gradient(135deg, #34d399 0%, #10b981 100%);
     --success: #34d399;
-    --danger: #f87171;
-    --warning: #fbbf24;
-    --accent: #a78bfa;
+    --danger: #fca5a5;
+    --warning: #fde047;
+    --accent: #6ee7b7;
     --glass: rgba(255, 255, 255, 0.05);
     --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-    --header-bg: rgba(2, 44, 34, 0.8);
+    --header-bg: rgba(6, 78, 59, 0.8);
     --table-header-bg: rgba(255, 255, 255, 0.02);
     --table-border: rgba(255, 255, 255, 0.08);
-    --modal-bg: rgba(2, 44, 34, 0.8);
+    --modal-bg: rgba(6, 78, 59, 0.8);
+}
+
+/* Тема "Океан" (Ocean Blue) */
+[data-theme="ocean"] {
+    --bg-main: #0c4a6e;
+    --bg-gradient: radial-gradient(circle at top right, #0369a1, var(--bg-main));
+    --bg-card: #082f49;
+    --bg-input: #042f4b;
+    --border: rgba(255, 255, 255, 0.1);
+    --text: #f0f9ff;
+    --text-muted: #bae6fd;
+    --primary: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    --primary-hover: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --accent: #7dd3fc;
+    --glass: rgba(255, 255, 255, 0.05);
+    --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    --header-bg: rgba(8, 47, 73, 0.8);
+    --table-header-bg: rgba(255, 255, 255, 0.02);
+    --table-border: rgba(255, 255, 255, 0.08);
+    --modal-bg: rgba(8, 47, 73, 0.8);
+}
+
+/* Тема "Закат" (Sunset Purple) */
+[data-theme="sunset"] {
+    --bg-main: #312e81;
+    --bg-gradient: radial-gradient(circle at top right, #4c1d95, var(--bg-main));
+    --bg-card: #1e1b4b;
+    --bg-input: #2e1065;
+    --border: rgba(255, 255, 255, 0.1);
+    --text: #fffbeb;
+    --text-muted: #fde68a;
+    --primary: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --primary-hover: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --accent: #fcd34d;
+    --glass: rgba(255, 255, 255, 0.05);
+    --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    --header-bg: rgba(30, 27, 75, 0.8);
+    --table-header-bg: rgba(255, 255, 255, 0.02);
+    --table-border: rgba(255, 255, 255, 0.08);
+    --modal-bg: rgba(30, 27, 75, 0.8);
+}
+
+/* Тема "Рубин" (Ruby Red) */
+[data-theme="ruby"] {
+    --bg-main: #450a0a;
+    --bg-gradient: radial-gradient(circle at top right, #7f1d1d, var(--bg-main));
+    --bg-card: #450a0a;
+    --bg-input: #2e0808;
+    --border: rgba(255, 255, 255, 0.1);
+    --text: #fef2f2;
+    --text-muted: #fecaca;
+    --primary: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --primary-hover: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --accent: #fca5a5;
+    --glass: rgba(255, 255, 255, 0.05);
+    --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    --header-bg: rgba(69, 10, 10, 0.8);
+    --table-header-bg: rgba(255, 255, 255, 0.02);
+    --table-border: rgba(255, 255, 255, 0.08);
+    --modal-bg: rgba(69, 10, 10, 0.8);
 }
 
 * {
