@@ -80,25 +80,26 @@ function calculateFinancials() {
         }
         const p = getProfit(s);
         const revenue = s.items.reduce((sum, item) => sum + (item.priceUZS * item.cartQty), 0);
+        const itemsCount = s.items.reduce((sum, item) => sum + (item.cartQty || 1), 0);
 
         stats.total.profit += p;
         stats.total.revenue += revenue;
-        stats.total.count++;
+        stats.total.count += itemsCount;
 
         if (sDate >= startOfDay) {
             stats.day.profit += p;
             stats.day.revenue += revenue;
-            stats.day.count++;
+            stats.day.count += itemsCount;
         }
         if (sDate >= startOfWeek) {
             stats.week.profit += p;
             stats.week.revenue += revenue;
-            stats.week.count++;
+            stats.week.count += itemsCount;
         }
         if (sDate >= startOfMonth) {
             stats.month.profit += p;
             stats.month.revenue += revenue;
-            stats.month.count++;
+            stats.month.count += itemsCount;
         }
 
         // Расчет за период
@@ -108,7 +109,7 @@ function calculateFinancials() {
         if (inPeriod) {
             stats.period.profit += p;
             stats.period.revenue += revenue;
-            stats.period.count++;
+            stats.period.count += itemsCount;
         }
     });
 
@@ -177,7 +178,7 @@ function calculateFinancials() {
     if (document.getElementById('label-revenue')) document.getElementById('label-revenue').innerText = "Торговля " + labelSuffix;
     if (document.getElementById('label-expense')) document.getElementById('label-expense').innerText = "Расход " + labelSuffix;
     if (document.getElementById('label-profit')) document.getElementById('label-profit').innerText = "Чистая прибыль " + labelSuffix;
-    if (document.getElementById('label-count')) document.getElementById('label-count').innerText = "Кол-во продаж " + labelSuffix;
+    if (document.getElementById('label-count')) document.getElementById('label-count').innerText = "Продано товаров " + labelSuffix;
     if (document.getElementById('label-investment')) document.getElementById('label-investment').innerText = "Закупка товара " + labelSuffix;
 
     updateEl('stats-daily-revenue', stats.period.revenue);
@@ -200,7 +201,7 @@ function calculateFinancials() {
     const summaryText = document.getElementById('stats-summary-text');
     if (summaryText) {
         summaryText.innerHTML = `
-            В этом месяце вы совершили <b>${stats.month.count}</b> продаж.<br><br>
+            В этом месяце продано <b>${stats.month.count}</b> ед. товара.<br><br>
             <b>Чистая прибыль:</b> <br>
             <span style="color: ${stats.month.profit >= 0 ? 'var(--success)' : '#ef4444'}; font-weight: 700; font-size: 1.1em;">
                 ${window.format(Math.round(stats.month.profit))} сум
