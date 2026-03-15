@@ -39,11 +39,11 @@ function calculateFinancials() {
     const statsEnd = document.getElementById('statsEnd')?.value;
 
     const stats = {
-        day: { profit: 0, count: 0 },
-        week: { profit: 0, count: 0 },
-        month: { profit: 0, count: 0 },
-        total: { profit: 0, count: 0 },
-        period: { profit: 0, count: 0 }
+        day: { profit: 0, count: 0, revenue: 0, expense: 0 },
+        week: { profit: 0, count: 0, revenue: 0, expense: 0 },
+        month: { profit: 0, count: 0, revenue: 0, expense: 0 },
+        total: { profit: 0, count: 0, revenue: 0, expense: 0 },
+        period: { profit: 0, count: 0, revenue: 0, expense: 0 }
     };
 
     sales.forEach(s => {
@@ -59,20 +59,25 @@ function calculateFinancials() {
             }
         }
         const p = getProfit(s);
+        const revenue = s.items.reduce((sum, item) => sum + (item.priceUZS * item.cartQty), 0);
 
         stats.total.profit += p;
+        stats.total.revenue += revenue;
         stats.total.count++;
 
         if (sDate >= startOfDay) {
             stats.day.profit += p;
+            stats.day.revenue += revenue;
             stats.day.count++;
         }
         if (sDate >= startOfWeek) {
             stats.week.profit += p;
+            stats.week.revenue += revenue;
             stats.week.count++;
         }
         if (sDate >= startOfMonth) {
             stats.month.profit += p;
+            stats.month.revenue += revenue;
             stats.month.count++;
         }
 
@@ -86,6 +91,7 @@ function calculateFinancials() {
         }
         if (inPeriod) {
             stats.period.profit += p;
+            stats.period.revenue += revenue;
             stats.period.count++;
         }
     });
@@ -103,10 +109,20 @@ function calculateFinancials() {
         }
 
         stats.total.profit -= ex.amount;
+        stats.total.expense += ex.amount;
 
-        if (exDate >= startOfDay) stats.day.profit -= ex.amount;
-        if (exDate >= startOfWeek) stats.week.profit -= ex.amount;
-        if (exDate >= startOfMonth) stats.month.profit -= ex.amount;
+        if (exDate >= startOfDay) {
+            stats.day.profit -= ex.amount;
+            stats.day.expense += ex.amount;
+        }
+        if (exDate >= startOfWeek) {
+            stats.week.profit -= ex.amount;
+            stats.week.expense += ex.amount;
+        }
+        if (exDate >= startOfMonth) {
+            stats.month.profit -= ex.amount;
+            stats.month.expense += ex.amount;
+        }
 
         // Расходы за период
         let inPeriod = true;
@@ -118,20 +134,23 @@ function calculateFinancials() {
         }
         if (inPeriod) {
             stats.period.profit -= ex.amount;
+            stats.period.expense += ex.amount;
         }
     });
 
-    // Обновляем UI
-    updateStatCard('day', stats.day);
-    updateStatCard('week', stats.week);
-    updateStatCard('month', stats.month);
-    updateStatCard('total', stats.total);
+    // Обновляем UI (Главные карточки)
+    const updateEl = (id, val, color) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerText = window.format(Math.round(val)) + " сум";
+            if (color) el.style.color = color;
+        }
+    };
 
-    const periodEl = document.getElementById('stats-period-profit');
-    if (periodEl) {
-        periodEl.innerText = window.format(Math.round(stats.period.profit)) + " сум";
-        periodEl.style.color = stats.period.profit >= 0 ? 'var(--success)' : '#ef4444';
-    }
+    updateEl('stats-daily-revenue', stats.day.revenue);
+    updateEl('stats-daily-expense', stats.day.expense, '#ef4444');
+    updateEl('stats-daily-profit', stats.day.profit, stats.day.profit >= 0 ? 'var(--success)' : '#ef4444');
+    updateEl('stats-period-profit', stats.period.profit, stats.period.profit >= 0 ? 'var(--success)' : '#ef4444');
 
     // Сводка
     const monthExpensesOnly = expenses.filter(ex =>
@@ -163,16 +182,6 @@ function calculateFinancials() {
             <small style="color: var(--text-muted); font-size: 11px;">(Не вычитается из чистой прибыли)</small>
         `;
     }
-}
-
-function updateStatCard(id, data) {
-    const profitEl = document.getElementById(`stats-profit-${id}`);
-    const salesEl = document.getElementById(`stats-sales-${id}`);
-    if (profitEl) {
-        profitEl.innerText = window.format(Math.round(data.profit)) + " сум";
-        profitEl.style.color = data.profit >= 0 ? 'var(--success)' : '#ef4444';
-    }
-    if (salesEl) salesEl.innerText = `Продаж: ${data.count}`;
 }
 
 export function renderExpensesBreakdown() {

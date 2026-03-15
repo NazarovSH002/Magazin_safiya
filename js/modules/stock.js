@@ -4,7 +4,7 @@ export function calculateTarget(source = 'cny') {
     const cnyVal = parseFloat(document.getElementById('pPriceCNY').value) || 0;
     const usdVal = parseFloat(document.getElementById('pPriceUSD').value) || 0;
     const rates = window.fetchRates();
-    
+
     let costUZS = 0;
     if (source === 'usd' && usdVal > 0) {
         costUZS = Math.round(usdVal * rates.usd);
@@ -13,7 +13,7 @@ export function calculateTarget(source = 'cny') {
         costUZS = Math.round((cnyVal / rates.cny) * rates.uzs);
         document.getElementById('pPriceUSD').value = 0;
     }
-    
+
     document.getElementById('pCostUZS').value = costUZS;
 }
 
@@ -44,7 +44,7 @@ export function addOrUpdateProduct() {
         const idx = window.products.findIndex(p => p.id === window.editingId);
         if (idx !== -1) {
             window.products[idx] = { ...window.products[idx], name, qty, priceCNY: cny, priceUSD: usd, costUZS, priceUZS: uzs, date: pDate };
-            
+
             // СИНХРОНИЗАЦИЯ: Обновляем те же товары в магазине
             if (window.shopProducts) {
                 window.shopProducts.forEach(s => {
@@ -57,7 +57,7 @@ export function addOrUpdateProduct() {
                     }
                 });
             }
-            
+
             window.logAction('edit_product', `Изменен товар: ${name}`, { id: window.editingId, qty, uzs });
         }
         window.editingId = null;
@@ -340,15 +340,15 @@ export function importCSV(event) {
                 const cny = parseFloat(cols[2]) || 0;
                 const costUZS = Math.round((cny / rates.cny) * rates.uzs);
                 const uzs = (cols.length >= 4 && cols[3].trim() !== "") ? parseInt(cols[3]) : costUZS;
-                
-                window.products.push({ 
-                    id: Date.now() + Math.floor(Math.random() * 1000000), 
-                    name, 
-                    qty, 
-                    priceCNY: cny, 
+
+                window.products.push({
+                    id: Date.now() + Math.floor(Math.random() * 1000000),
+                    name,
+                    qty,
+                    priceCNY: cny,
                     costUZS: costUZS,
-                    priceUZS: uzs, 
-                    date: new Date().toLocaleString() 
+                    priceUZS: uzs,
+                    date: new Date().toLocaleString()
                 });
             }
         });
