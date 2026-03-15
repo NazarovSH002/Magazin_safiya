@@ -35,8 +35,28 @@ function calculateFinancials() {
         return saleProfit;
     };
 
-    const statsStart = document.getElementById('statsStart')?.value;
-    const statsEnd = document.getElementById('statsEnd')?.value;
+    let statsStartEl = document.getElementById('statsStart');
+    let statsEndEl = document.getElementById('statsEnd');
+    
+    // Если пустые, ставим сегодня
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (statsStartEl && !statsStartEl.value) statsStartEl.value = todayStr;
+    if (statsEndEl && !statsEndEl.value) statsEndEl.value = todayStr;
+
+    const statsStart = statsStartEl?.value;
+    const statsEnd = statsEndEl?.value;
+
+    let startLimit = null;
+    if (statsStart) {
+        const parts = statsStart.split('-');
+        startLimit = new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    let endLimit = null;
+    if (statsEnd) {
+        const parts = statsEnd.split('-');
+        endLimit = new Date(parts[0], parts[1] - 1, parts[2]);
+        endLimit.setHours(23, 59, 59, 999);
+    }
 
     const stats = {
         day: { profit: 0, count: 0, revenue: 0, expense: 0 },
@@ -83,12 +103,8 @@ function calculateFinancials() {
 
         // Расчет за период
         let inPeriod = true;
-        if (statsStart && sDate < new Date(statsStart)) inPeriod = false;
-        if (statsEnd) {
-            const endLimit = new Date(statsEnd);
-            endLimit.setHours(23, 59, 59, 999);
-            if (sDate > endLimit) inPeriod = false;
-        }
+        if (startLimit && sDate < startLimit) inPeriod = false;
+        if (endLimit && sDate > endLimit) inPeriod = false;
         if (inPeriod) {
             stats.period.profit += p;
             stats.period.revenue += revenue;
@@ -126,12 +142,8 @@ function calculateFinancials() {
 
         // Расходы за период
         let inPeriod = true;
-        if (statsStart && exDate < new Date(statsStart)) inPeriod = false;
-        if (statsEnd) {
-            const endLimit = new Date(statsEnd);
-            endLimit.setHours(23, 59, 59, 999);
-            if (exDate > endLimit) inPeriod = false;
-        }
+        if (startLimit && exDate < startLimit) inPeriod = false;
+        if (endLimit && exDate > endLimit) inPeriod = false;
         if (inPeriod) {
             stats.period.profit -= ex.amount;
             stats.period.expense += ex.amount;
@@ -139,18 +151,26 @@ function calculateFinancials() {
     });
 
     // Обновляем UI (Главные карточки)
-    const updateEl = (id, val, color) => {
+    const updateEl = (id, val, color, isNumeric) => {
         const el = document.getElementById(id);
         if (el) {
-            el.innerText = window.format(Math.round(val)) + " сум";
+            el.innerText = isNumeric ? window.format(Math.round(val)) : window.format(Math.round(val)) + " сум";
             if (color) el.style.color = color;
         }
     };
 
-    updateEl('stats-daily-revenue', stats.day.revenue);
-    updateEl('stats-daily-expense', stats.day.expense, '#ef4444');
-    updateEl('stats-daily-profit', stats.day.profit, stats.day.profit >= 0 ? 'var(--success)' : '#ef4444');
-    updateEl('stats-period-profit', stats.period.profit, stats.period.profit >= 0 ? 'var(--success)' : '#ef4444');
+    const isToday = statsStart === todayStr && statsEnd === todayStr;
+    const labelSuffix = isToday ? "(сегодня)" : "за период";
+    
+    if (document.getElementById('label-revenue')) document.getElementById('label-revenue').innerText = "Торговля " + labelSuffix;
+    if (document.getElementById('label-expense')) document.getElementById('label-expense').innerText = "Расход " + labelSuffix;
+    if (document.getElementById('label-profit')) document.getElementById('label-profit').innerText = "Чистая прибыль " + labelSuffix;
+    if (document.getElementById('label-count')) document.getElementById('label-count').innerText = "Кол-во продаж " + labelSuffix;
+
+    updateEl('stats-daily-revenue', stats.period.revenue);
+    updateEl('stats-daily-expense', stats.period.expense, '#ef4444');
+    updateEl('stats-daily-profit', stats.period.profit, stats.period.profit >= 0 ? 'var(--success)' : '#ef4444');
+    updateEl('stats-period-count', stats.period.count, '', true);
 
     // Сводка
     const monthExpensesOnly = expenses.filter(ex =>
@@ -198,6 +218,18 @@ export function renderExpensesBreakdown() {
     const statsStart = document.getElementById('statsStart')?.value;
     const statsEnd = document.getElementById('statsEnd')?.value;
 
+    let startLimit = null;
+    if (statsStart) {
+        const parts = statsStart.split('-');
+        startLimit = new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    let endLimit = null;
+    if (statsEnd) {
+        const parts = statsEnd.split('-');
+        endLimit = new Date(parts[0], parts[1] - 1, parts[2]);
+        endLimit.setHours(23, 59, 59, 999);
+    }
+
     // Группировка: Месяц -> День -> Категория/Расход
     const data = {};
 
@@ -206,12 +238,8 @@ export function renderExpensesBreakdown() {
         const exDate = new Date(exParts[0], exParts[1] - 1, exParts[2]);
 
         // Применяем фильтр по датам
-        if (statsStart && exDate < new Date(statsStart)) return;
-        if (statsEnd) {
-            const endLimit = new Date(statsEnd);
-            endLimit.setHours(23, 59, 59, 999);
-            if (exDate > endLimit) return;
-        }
+        if (startLimit && exDate < startLimit) return;
+        if (endLimit && exDate > endLimit) return;
 
         const monthKey = exDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
         const dayKey = exDate.toLocaleDateString('ru-RU');
@@ -300,6 +328,18 @@ export function renderProfitBreakdown() {
     const statsStart = document.getElementById('statsStart')?.value;
     const statsEnd = document.getElementById('statsEnd')?.value;
 
+    let startLimit = null;
+    if (statsStart) {
+        const parts = statsStart.split('-');
+        startLimit = new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    let endLimit = null;
+    if (statsEnd) {
+        const parts = statsEnd.split('-');
+        endLimit = new Date(parts[0], parts[1] - 1, parts[2]);
+        endLimit.setHours(23, 59, 59, 999);
+    }
+
     sales.forEach(s => {
         let sDate;
         if (s.timestamp) sDate = new Date(s.timestamp);
@@ -310,12 +350,8 @@ export function renderProfitBreakdown() {
         }
 
         // Применяем фильтр
-        if (statsStart && sDate < new Date(statsStart)) return;
-        if (statsEnd) {
-            const endLimit = new Date(statsEnd);
-            endLimit.setHours(23, 59, 59, 999);
-            if (sDate > endLimit) return;
-        }
+        if (startLimit && sDate < startLimit) return;
+        if (endLimit && sDate > endLimit) return;
 
         const monthKey = sDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
         const dayKey = sDate.toLocaleDateString('ru-RU');
@@ -475,6 +511,13 @@ export function deleteExpense(id) {
 
 export function init() {
     console.log('📈 Модуль Статистики инициализирован');
-    const dateInput = document.getElementById('expDate');
-    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    const expDateInput = document.getElementById('expDate');
+    if (expDateInput) expDateInput.value = todayStr;
+
+    const statsStart = document.getElementById('statsStart');
+    const statsEnd = document.getElementById('statsEnd');
+    if (statsStart && !statsStart.value) statsStart.value = todayStr;
+    if (statsEnd && !statsEnd.value) statsEnd.value = todayStr;
 }
