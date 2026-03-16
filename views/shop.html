@@ -2,7 +2,10 @@
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="font-size: 18px; font-weight: 700;">🏪 Товар в магазине</h3>
-            <button class="btn btn-primary btn-sm" onclick="printReport('shop')">🖨️ Печать</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-outline btn-sm" onclick="window.StockModule.downloadShopCSV()">💾 Скачать CSV</button>
+                <button class="btn btn-primary btn-sm" onclick="printReport('shop')">🖨️ Печать</button>
+            </div>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3>Наличие в магазине (торговый зал)</h3>
@@ -14,10 +17,10 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Название товара</th>
-                        <th>В магазине</th>
-                        <th>Себестоимость</th>
-                        <th>Дата перемещения</th>
+                        <th onclick="window.StockModule.setShopSort('name')" style="cursor:pointer">Название товара ↕️</th>
+                        <th onclick="window.StockModule.setShopSort('qty')" style="cursor:pointer">В магазине ↕️</th>
+                        <th onclick="window.StockModule.setShopSort('cost')" style="cursor:pointer">Себестоимость ↕️</th>
+                        <th onclick="window.StockModule.setShopSort('date')" style="cursor:pointer">Дата перемещения ↕️</th>
                         <th style="width: 100px;"></th>
                     </tr>
                 </thead>

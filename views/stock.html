@@ -1,5 +1,6 @@
 <div id="view-stock" class="view">
     <div style="display: flex; gap: 12px; margin-bottom: 20px; justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="window.StockModule.downloadStockCSV()">💾 Скачать CSV</button>
         <button class="btn btn-outline" onclick="downloadTemplate()">Шаблон</button>
         <button class="btn btn-primary" onclick="document.getElementById('importInput').click()">🚀 Импорт CSV</button>
         <input type="file" id="importInput" style="display: none;" onchange="importCSV(event)">
@@ -85,10 +86,10 @@
                         <tr>
                             <th style="width: 30px;"><input type="checkbox" id="selectAll"
                                     onclick="toggleAllCheckboxes(this.checked)"></th>
-                            <th>Товар на складе</th>
-                            <th>Кол-во</th>
-                            <th>Закуп</th>
-                            <th>Себестоимость</th>
+                            <th onclick="window.StockModule.setStockSort('name')" style="cursor:pointer">Товар на складе ↕️</th>
+                            <th onclick="window.StockModule.setStockSort('qty')" style="cursor:pointer">Кол-во ↕️</th>
+                            <th onclick="window.StockModule.setStockSort('id')" style="cursor:pointer">Закуп ↕️</th>
+                            <th onclick="window.StockModule.setStockSort('cost')" style="cursor:pointer">Себестоимость ↕️</th>
                             <th style="width: 140px;">Действие</th>
                         </tr>
                     </thead>

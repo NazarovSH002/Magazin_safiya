@@ -131,8 +131,30 @@ export function renderStock() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const filtered = window.products.filter(p => p.name.toLowerCase().includes(query)).sort((a, b) => b.id - a.id);
-    const toRender = filtered.slice(0, 100); // Ограничиваем рендеринг для скорости
+    const sortKey = window.stockSortKey || 'id';
+    const sortDir = window.stockSortDir || 'desc';
+
+    let filtered = window.products.filter(p => p.name.toLowerCase().includes(query));
+
+    // Сортировка
+    filtered.sort((a, b) => {
+        let valA, valB;
+        if (sortKey === 'name') { valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); }
+        else if (sortKey === 'qty') { valA = a.qty; valB = b.qty; }
+        else if (sortKey === 'date') { valA = a.date || ''; valB = b.date || ''; }
+        else if (sortKey === 'cost') { 
+            const rates = window.fetchRates();
+            valA = window.getCostUZS(a, rates);
+            valB = window.getCostUZS(b, rates);
+        }
+        else { valA = a.id; valB = b.id; } // По умолчанию (id)
+
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const toRender = filtered.slice(0, 100);
 
     toRender.forEach(p => {
         const tr = document.createElement('tr');
@@ -207,7 +229,25 @@ export function renderShopInventory() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    window.shopProducts.filter(s => s.name.toLowerCase().includes(query)).forEach(s => {
+    const sortKey = window.shopSortKey || 'lastUpdate';
+    const sortDir = window.shopSortDir || 'desc';
+
+    let filtered = window.shopProducts.filter(s => s.name.toLowerCase().includes(query));
+
+    filtered.sort((a, b) => {
+        let valA, valB;
+        if (sortKey === 'name') { valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); }
+        else if (sortKey === 'qty') { valA = a.qty; valB = b.qty; }
+        else if (sortKey === 'date') { valA = a.lastUpdate || ''; valB = b.lastUpdate || ''; }
+        else if (sortKey === 'cost') { valA = a.costUZS || 0; valB = b.costUZS || 0; } 
+        else { valA = a.id; valB = b.id; }
+
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    filtered.forEach(s => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td data-label="Название" style="font-weight:600">${s.name}</td>
@@ -359,6 +399,56 @@ export function importCSV(event) {
     reader.readAsText(file);
 }
 
+export function setStockSort(key) {
+    if (window.stockSortKey === key) {
+        window.stockSortDir = window.stockSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        window.stockSortKey = key;
+        window.stockSortDir = 'desc';
+    }
+    renderStock();
+}
+
+export function setShopSort(key) {
+    if (window.shopSortKey === key) {
+        window.shopSortDir = window.shopSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        window.shopSortKey = key;
+        window.shopSortDir = 'desc';
+    }
+    renderShopInventory();
+}
+
+export function downloadStockCSV() {
+    let csv = "\ufeffНазвание;Кол-во;Закуп ($);Себестоимость (сум);Дата\n";
+    const rates = window.fetchRates();
+    window.products.forEach(p => {
+        const cost = window.getCostUZS(p, rates);
+        csv += `"${p.name}";${p.qty};${p.priceUSD > 0 ? p.priceUSD : p.priceCNY + '¥'};${cost};${p.date || '-'}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `stock_export_${new Date().toLocaleDateString()}.csv`;
+    link.click();
+}
+
+export function downloadShopCSV() {
+    let csv = "\ufeffНазвание;Кол-во;Себестоимость (сум);Дата перемещения\n";
+    window.shopProducts.forEach(s => {
+        csv += `"${s.name}";${s.qty};${s.costUZS || 0};${s.lastUpdate}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `shop_export_${new Date().toLocaleDateString()}.csv`;
+    link.click();
+}
+
 export function init() {
+    window.stockSortKey = 'id';
+    window.stockSortDir = 'desc';
+    window.shopSortKey = 'lastUpdate';
+    window.shopSortDir = 'desc';
     console.log('📦 Модуль Stock инициализирован');
 }
