@@ -131,7 +131,7 @@ export function renderStock() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const filtered = window.products.filter(p => p.name.toLowerCase().includes(query));
+    const filtered = window.products.filter(p => p.name.toLowerCase().includes(query)).sort((a, b) => b.id - a.id);
     const toRender = filtered.slice(0, 100); // Ограничиваем рендеринг для скорости
 
     toRender.forEach(p => {

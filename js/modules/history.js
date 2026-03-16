@@ -191,7 +191,7 @@ export function renderInstallments() {
 }
 
 export function renderHistory() {
-    const mode = document.getElementById('historyMode')?.value || 'sales';
+    const mode = document.getElementById('historyMode')?.value || 'all';
     const start = document.getElementById('historyStart')?.value;
     const end = document.getElementById('historyEnd')?.value;
     const actionFilter = document.getElementById('actionTypeFilter')?.value || 'all';
@@ -206,7 +206,139 @@ export function renderHistory() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    if (mode === 'actions') {
+    if (mode === 'all') {
+        if (titleEl) titleEl.innerText = '🔄 Вся история (Продажи и Движение товара)';
+        if (actionFilterContainer) actionFilterContainer.style.display = 'none';
+        if (salesFilterContainer) salesFilterContainer.style.display = 'block';
+
+        let events = [];
+
+        let h_sales = window.sales || [];
+        h_sales.forEach(s => {
+            let ts = 0;
+            if (s.timestamp) ts = s.timestamp;
+            else if (s.date && s.date.includes(',')) {
+                 const [d, m, y] = s.date.split(',')[0].split('.');
+                 const timePart = s.date.split(', ')[1];
+                 const [hr, min, sec] = timePart ? timePart.split(':') : ['00','00','00'];
+                 if(d && m && y) ts = new Date(`${y}-${m}-${d}T${hr}:${min}:${sec}`).getTime();
+            }
+            if(!ts) ts = s.id;
+            events.push({ _isSale: true, _timestamp: ts, ...s });
+        });
+
+        let h_actions = window.actions || [];
+        h_actions.forEach(a => {
+            if (['add_product', 'transfer_to_shop', 'return_to_stock', 'edit_product', 'delete_product', 'return_item'].includes(a.type)) {
+                let ts = new Date(a.date).getTime();
+                if(isNaN(ts)) ts = a.id || 0;
+                events.push({ _isAction: true, _timestamp: ts, ...a });
+            }
+        });
+
+        if (start) {
+            const startTime = new Date(start).getTime();
+            events = events.filter(e => e._timestamp >= startTime);
+        }
+        if (end) {
+            const endTime = new Date(end).setHours(23, 59, 59, 999);
+            events = events.filter(e => e._timestamp <= endTime);
+        }
+
+        if (typeFilter !== 'all') {
+            events = events.filter(e => !e._isSale || e.type === typeFilter);
+        }
+
+        if (search) {
+            events = events.filter(e => {
+                if (e._isSale) {
+                    return (e.customer || '').toLowerCase().includes(search) || 
+                           (e.comment || '').toLowerCase().includes(search) ||
+                           (Array.isArray(e.items) ? e.items.some(i => (i.name || '').toLowerCase().includes(search)) : (e.items || '').toLowerCase().includes(search));
+                } else {
+                    return (e.description || '').toLowerCase().includes(search) ||
+                           (e.user || '').toLowerCase().includes(search);
+                }
+            });
+        }
+
+        events.sort((a, b) => b._timestamp - a._timestamp);
+
+        events.forEach(e => {
+            if (e._isSale) {
+                const hasDetails = Array.isArray(e.items);
+                const tr = document.createElement('tr');
+                tr.style.cursor = hasDetails ? 'pointer' : 'default';
+                tr.onclick = (ev) => { if (ev.target.tagName !== 'BUTTON') toggleDetails(e.id); };
+
+                let itemsSummary = hasDetails ? e.items.map(item => `<div style="font-size:12px;">${item.name} <span style="color:var(--accent)">x ${item.cartQty}</span></div>`).join('') : `<div style="font-size:12px;">${e.items}</div>`;
+
+                tr.innerHTML = `
+                    <td style="font-size:12px;">${e.date}</td>
+                    <td style="font-weight:600;"><span class="badge" style="background:rgba(16,185,129,0.1); color:var(--success); font-size:10px; margin-right:5px;">ПРОДАЖА</span>${e.customer}</td>
+                    <td>${itemsSummary}</td>
+                    <td style="font-weight:700; color:var(--success);">${format(e.total)} сум</td>
+                    <td><span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); border: 1px solid var(--border); font-size:10px;">${e.type}</span></td>
+                    <td><div class="actions-cell" style="justify-content: flex-end;"><button class="btn btn-primary btn-sm" onclick="HistoryModule.printReceipt(${e.id})" title="Печать чека">🖨️</button></div></td>
+                `;
+                tbody.appendChild(tr);
+
+                if (hasDetails) {
+                    const detailTr = document.createElement('tr');
+                    detailTr.id = `details-${e.id}`;
+                    detailTr.className = 'details-row';
+                    let itemsHtml = e.items.map(item => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;">
+                            <div><span>${item.name} x ${item.cartQty}</span><br><small style="color:var(--text-muted)">${format(item.priceUZS)} x ${item.cartQty} = ${format(item.priceUZS * item.cartQty)} сум</small></div>
+                            <button class="btn btn-danger btn-sm" style="padding: 2px 8px; font-size: 11px;" onclick="HistoryModule.returnItem(${e.id}, ${item.id})">↩ Возврат</button>
+                        </div>
+                    `).join('');
+                    detailTr.innerHTML = `
+                        <td colspan="6" style="padding:15px; background:rgba(255,255,255,0.02); border-left: 2px solid var(--success);">
+                            <div style="max-width:500px;">
+                                <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px; font-weight:700;">ПОДРОБНЫЙ СОСТАВ:</p>
+                                ${itemsHtml}
+                                ${e.comment ? `<p style="margin-top:15px; font-size:12px; color:var(--accent);">💬 Комментарий: ${e.comment}</p>` : ''}
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(detailTr);
+                }
+            } else {
+                const tr = document.createElement('tr');
+                let badgeColor = 'var(--text-muted)';
+                let typeText = 'ДЕЙСТВИЕ';
+                let textColor = 'var(--text)';
+                if(e.type === 'add_product') { badgeColor = '#3b82f6'; typeText = 'ПРИХОД НА СКЛАД'; }
+                if(e.type === 'transfer_to_shop') { badgeColor = '#8b5cf6'; typeText = 'ПЕРЕВОД В МАГАЗИН'; }
+                if(e.type === 'return_to_stock') { badgeColor = '#f59e0b'; typeText = 'ВОЗВРАТ ИЗ МАГАЗИНА'; textColor = '#f59e0b'; }
+                if(e.type === 'return_item') { badgeColor = '#f59e0b'; typeText = 'ВОЗВРАТ ТОВАРА ОТ КЛИЕНТА'; textColor = '#f59e0b'; }
+                if(e.type === 'edit_product') { badgeColor = '#14b8a6'; typeText = 'РЕДАКТИРОВАНИЕ ТОВАРА'; }
+                if(e.type === 'delete_product') { badgeColor = '#ef4444'; typeText = 'УДАЛЕНИЕ ТОВАРА'; textColor = '#ef4444'; }
+
+                let detailsText = '';
+                if(e.details && typeof e.details === 'object' && Object.keys(e.details).length > 0){
+                    let parts = [];
+                    if(e.details.qty) parts.push(`Кол-во: ${e.details.qty}`);
+                    if(e.details.qtyToReturn) parts.push(`Возврат: ${e.details.qtyToReturn}`);
+                    if(e.details.uzs) parts.push(`Цена: ${format(e.details.uzs)}`);
+                    detailsText = parts.join(' | ');
+                }
+
+                const displayDate = e.date && e.date.includes('T') ? new Date(e.date).toLocaleString() : (e.date || '-');
+
+                tr.innerHTML = `
+                    <td style="font-size:12px;">${displayDate}</td>
+                    <td style="font-weight:600;"><span class="badge" style="background:rgba(255,255,255,0.05); color:${badgeColor}; font-size:10px; margin-right:5px;">ЛОГ</span>${e.user || 'Система'}</td>
+                    <td style="font-size:13px; color:${textColor};"><strong style="color:${badgeColor}">${typeText}</strong>: ${e.description}</td>
+                    <td style="font-size:12px; color:var(--text-muted);">${detailsText}</td>
+                    <td><span class="badge" style="background:rgba(255,255,255,0.1); font-size:10px;">ЛОГ/ОПЕРАЦИЯ</span></td>
+                    <td></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+    } else if (mode === 'actions') {
         if (titleEl) titleEl.innerText = '📜 История действий (Логи)';
         if (actionFilterContainer) actionFilterContainer.style.display = 'block';
         if (salesFilterContainer) salesFilterContainer.style.display = 'none';

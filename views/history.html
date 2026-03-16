@@ -13,8 +13,9 @@
                 <label style="font-size: 12px; color: var(--text-muted);">Режим</label>
                 <select id="historyMode" onchange="window.HistoryModule.renderHistory()"
                     style="background: var(--bg-input); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px;">
-                    <option value="sales">💰 Продажи</option>
-                    <option value="actions">📜 Все действия (Логи)</option>
+                    <option value="all" selected>🔄 Вся история (Продажи + Движение)</option>
+                    <option value="sales">💰 Только продажи</option>
+                    <option value="actions">📜 Системные логи</option>
                 </select>
             </div>
             <div id="actionFilterContainer" class="form-group" style="margin-bottom: 0; display: none;">
